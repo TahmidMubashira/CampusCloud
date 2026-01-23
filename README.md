@@ -8,12 +8,12 @@
 - ID: 20230104048 
 
 **2.Tasmia Tabassum Shreoshi**  
-- Role: Front-end Developer  
+- Role: Back-end Developer  
 - Email: tasmia.cse.20230104026@aust.edu  
 - ID: 20230104026  
 
 **3.Tasnima Faruk Prapty**  
-- Role: Back-end Developer  
+- Role: Front-end Developer  
 - Email: tasnima.cse.20230104038@aust.edu  
 - ID: 20230104038    
 
