@@ -89,7 +89,8 @@ Campus Cloud is a centralized university resource hub designed to help students 
 - Departments  
 - Courses  
 - Activity History  
-- Rewards  
+- Rewards
+- Admin
 
 ---
 
@@ -104,6 +105,9 @@ PUT    /resources/{id}
 DELETE /resources/{id}
 GET    /history
 GET    /rewards
+GET    /api/admin/resources/pending
+POST   /api/admin/resources/{id}/approve
+POST   /api/admin/resources/{id}/reject
 ```
 
 ---
