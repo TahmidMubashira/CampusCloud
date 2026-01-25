@@ -4,17 +4,17 @@
 
 **1.Tahmid Mubashira Obonti**  
 - Role: Team Lead  
-- Email: tahmid.cse.20230104048@aust.edu  
+- Email: tahmidobonti9@gmail.com
 - ID: 20230104048 
 
 **2.Tasmia Tabassum Shreoshi**  
 - Role: Back-end Developer  
-- Email: tasmia.cse.20230104026@aust.edu  
+- Email: tasmiashreoshi@gmail.com  
 - ID: 20230104026  
 
 **3.Tasnima Faruk Prapty**  
 - Role: Front-end Developer  
-- Email: tasnima.cse.20230104038@aust.edu  
+- Email: tasnimafarukprapty@gmail.com  
 - ID: 20230104038    
 
 
