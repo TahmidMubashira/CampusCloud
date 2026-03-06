@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
+
 class AuthController extends Controller
 {
-    /**
-     * Register a new user
-     */
+    
     public function register(Request $request)
     {
         $validated = $request->validate([
@@ -44,9 +44,7 @@ class AuthController extends Controller
         ], 201);
     }
 
-    /**
-     * Login user and return token
-     */
+    
     public function login(Request $request)
     {
         $request->validate([
@@ -54,7 +52,7 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        // Check credentials
+        
         if (!Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
             return response()->json([
                 'success' => false,
@@ -78,9 +76,7 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Logout user and revoke token
-     */
+    
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
@@ -91,9 +87,7 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Get authenticated user info
-     */
+    
     public function me(Request $request)
     {
         return response()->json([
