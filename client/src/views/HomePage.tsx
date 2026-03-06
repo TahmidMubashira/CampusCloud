@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Container, Row, Col, Button, Form, InputGroup, Nav, Navbar, NavDropdown } from 'react-bootstrap';
-
+import { Link } from 'react-router-dom'; // Import Link for navigation
 
 interface Resource {
   id: number;
@@ -13,7 +13,6 @@ interface Resource {
   downloads: number;
 }
 
-
 const RESOURCES: Resource[] = [
   { id: 1, title: 'Introduction to Data Structures', subject: 'Computer Science', fileType: 'PDF', category: 'Lecture Notes', uploadedBy: 'Tahmid', uploadedAt: '2026-02-20', downloads: 142 },
   { id: 2, title: 'Algorithm & Complexity notes', subject: 'Computer Science', fileType: 'PDF', category: 'Lecture Notes', uploadedBy: 'Mubashira', uploadedAt: '2026-02-18', downloads: 98 },
@@ -25,11 +24,8 @@ const RESOURCES: Resource[] = [
 
 const CATEGORIES = ['All', 'Lecture Notes', 'Past Papers', 'Assignments', 'Books', 'Lab Reports'];
 
-
 function ResourceCard({ resource }: { resource: Resource }) {
   const [hovered, setHovered] = useState(false);
-  const [downloaded, setDownloaded] = useState(false);
-
   return (
     <div
       onMouseEnter={() => setHovered(true)}
@@ -47,9 +43,7 @@ function ResourceCard({ resource }: { resource: Resource }) {
         flexDirection: 'column',
       }}
     >
-      
       <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-        
         <div style={{
           width: '36px',
           height: '44px',
@@ -67,7 +61,6 @@ function ResourceCard({ resource }: { resource: Resource }) {
             <path d="M11 1v4h4" fill="none" stroke="#90b8d0" strokeWidth="1"/>
           </svg>
         </div>
-
         <div style={{ flex: 1 }}>
           <h6 style={{
             fontFamily: "'Nunito', sans-serif",
@@ -84,11 +77,7 @@ function ResourceCard({ resource }: { resource: Resource }) {
           </p>
         </div>
       </div>
-
-      
       <div style={{ flex: 1 }} />
-
-      
       <div style={{ marginTop: '0.5rem' }}>
         <span style={{
           display: 'inline-block',
@@ -108,7 +97,6 @@ function ResourceCard({ resource }: { resource: Resource }) {
   );
 }
 
-// Main HomePage 
 export default function HomePage() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
@@ -123,7 +111,6 @@ export default function HomePage() {
   return (
     <div style={{ minHeight: '100vh', background: '#f2f7fb', fontFamily: "'Nunito', sans-serif" }}>
 
-      
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Lora:wght@400;600;700&display=swap');
         * { box-sizing: border-box; }
@@ -141,9 +128,35 @@ export default function HomePage() {
         .cat-pill.active { background: linear-gradient(135deg,#2e7da8,#4a9eca) !important; color: #fff !important; border-color: transparent !important; box-shadow: 0 3px 10px rgba(46,125,168,0.22); }
         .cat-pill:not(.active) { background: #fff; color: #4a6a80; }
         .cat-pill:not(.active):hover { background: #edf5fa !important; color: #1a3a50 !important; }
+        .profile-btn { 
+          background: linear-gradient(135deg, #2e7da8, #4a9eca);
+          border: none;
+          color: white;
+          font-family: 'Nunito', sans-serif;
+          font-weight: 700;
+          font-size: 0.82rem;
+          border-radius: 7px;
+          padding: 6px 18px;
+          margin-left: 8px;
+          text-decoration: none;
+          display: inline-block;
+          transition: opacity 0.2s;
+        }
+        .profile-btn:hover {
+          opacity: 0.9;
+          color: white;
+        }
+        .profile-btn.outline {
+          background: transparent;
+          border: 1.5px solid #4a90b8;
+          color: #4a6a80;
+        }
+        .profile-btn.outline:hover {
+          background: #e6f0f7;
+          color: #1a3a50;
+        }
       `}</style>
 
-      
       <Navbar expand="md" style={{
         background: '#fff',
         borderBottom: '1px solid #dce8f0',
@@ -168,6 +181,7 @@ export default function HomePage() {
 
           <Navbar.Collapse>
             <Nav className="ms-auto align-items-center gap-1">
+              {/* Existing dropdowns */}
               <NavDropdown title="Resources" id="res-dd" className="cc-dropdown-toggle">
                 {['Lecture Notes', 'Past Papers', 'Assignments', 'Books', 'Lab Reports'].map(c => (
                   <NavDropdown.Item key={c} onClick={() => { setActiveCategory(c); }}>{c}</NavDropdown.Item>
@@ -181,6 +195,15 @@ export default function HomePage() {
                 <NavDropdown.Item href="/admin/dashboard">Dashboard</NavDropdown.Item>
               </NavDropdown>
 
+              {/* NEW: Profile buttons */}
+              <Link to="/profile" className="profile-btn outline" style={{ marginLeft: '8px' }}>
+                👤 Student Profile
+              </Link>
+              <Link to="/admin" className="profile-btn" style={{ marginLeft: '4px' }}>
+                👑 Admin Profile
+              </Link>
+
+              {/* Original login/register buttons (optional, you can keep them) */}
               <Button variant="outline-secondary" size="sm" style={{
                 borderColor: '#a8c4d4',
                 color: '#4a6a80',
@@ -212,7 +235,7 @@ export default function HomePage() {
         </Container>
       </Navbar>
 
-      
+      {/* Hero section - unchanged */}
       <div style={{
         background: 'linear-gradient(135deg, #cfe5f2 0%, #dff0f8 40%, #c8dff0 100%)',
         borderBottom: '1px solid #b8d4e4',
@@ -220,13 +243,11 @@ export default function HomePage() {
         position: 'relative',
         overflow: 'hidden',
       }}>
-        
         <div style={{ position: 'absolute', top: '-50px', left: '-50px', width: '220px', height: '220px', borderRadius: '50%', background: 'rgba(100,160,200,0.07)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: '-60px', right: '8%', width: '260px', height: '260px', borderRadius: '50%', background: 'rgba(80,140,180,0.06)', pointerEvents: 'none' }} />
 
         <Container>
           <Row className="align-items-center">
-            
             <Col md={5}>
               <h1 style={{
                 fontFamily: "'Lora', serif",
@@ -281,7 +302,6 @@ export default function HomePage() {
               </InputGroup>
             </Col>
 
-            
             <Col md={7} className="mt-4 mt-md-0" style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <div style={{
                 background: 'linear-gradient(135deg, #b8d4e4 0%, #cce4f0 100%)',
@@ -298,7 +318,6 @@ export default function HomePage() {
                 overflow: 'hidden',
                 boxShadow: '0 4px 20px rgba(46,100,140,0.12)',
               }}>
-                
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
                   <span style={{ fontSize: '3.5rem' }}>💻</span>
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-end' }}>
@@ -312,8 +331,6 @@ export default function HomePage() {
                     ))}
                   </div>
                 </div>
-
-                
                 <div style={{
                   position: 'absolute', top: '12px', right: '14px',
                   background: '#fff', borderRadius: '7px', padding: '4px 10px',
@@ -323,8 +340,6 @@ export default function HomePage() {
                 }}>
                   📚 800+ Resources
                 </div>
-
-                
                 <div style={{
                   position: 'absolute', bottom: '12px', left: '14px',
                   background: '#fff', borderRadius: '7px', padding: '4px 10px',
@@ -340,10 +355,8 @@ export default function HomePage() {
         </Container>
       </div>
 
-      
+      {/* Main content - unchanged */}
       <Container style={{ padding: '2.5rem 1rem 3.5rem' }}>
-
-        
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <h2 style={{
             fontFamily: "'Lora', serif",
@@ -359,7 +372,6 @@ export default function HomePage() {
           </p>
         </div>
 
-        
         <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '2rem', flexWrap: 'wrap' }}>
           {CATEGORIES.map(cat => (
             <button
@@ -372,7 +384,6 @@ export default function HomePage() {
           ))}
         </div>
 
-        
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <p style={{ color: '#7a9db5', fontSize: '0.78rem', margin: 0 }}>
             Showing <strong style={{ color: '#2e7da8' }}>{filtered.length}</strong> result{filtered.length !== 1 ? 's' : ''}
@@ -385,7 +396,6 @@ export default function HomePage() {
           )}
         </div>
 
-        
         {filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem', color: '#7a9db5' }}>
             <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔍</div>
@@ -401,7 +411,6 @@ export default function HomePage() {
           </Row>
         )}
 
-        
         <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
           <Button style={{
             background: 'linear-gradient(135deg, #2e7da8, #4a9eca)',
@@ -419,7 +428,6 @@ export default function HomePage() {
         </div>
       </Container>
 
-      
       <footer style={{
         background: '#cce0ed',
         borderTop: '1px solid #b0ccdc',
@@ -436,7 +444,6 @@ export default function HomePage() {
           © 2026 CampusCloud. All rights reserved. For academic use only.
         </p>
       </footer>
-
     </div>
   );
 }
