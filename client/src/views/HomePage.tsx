@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Container, Row, Col, Button, Form, InputGroup, Nav, Navbar, NavDropdown } from 'react-bootstrap';
-import { Link } from 'react-router-dom'; // Import Link for navigation
+import { Link } from 'react-router-dom';
 
 interface Resource {
   id: number;
@@ -45,15 +45,9 @@ function ResourceCard({ resource }: { resource: Resource }) {
     >
       <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
         <div style={{
-          width: '36px',
-          height: '44px',
-          flexShrink: 0,
-          background: '#edf5fa',
-          borderRadius: '6px',
-          border: '1px solid #c8dce8',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          width: '36px', height: '44px', flexShrink: 0,
+          background: '#edf5fa', borderRadius: '6px', border: '1px solid #c8dce8',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           <svg width="18" height="22" viewBox="0 0 18 22" fill="none">
             <rect x="1" y="1" width="16" height="20" rx="2" fill="#e0eef6" stroke="#90b8d0" strokeWidth="1.2"/>
@@ -62,14 +56,7 @@ function ResourceCard({ resource }: { resource: Resource }) {
           </svg>
         </div>
         <div style={{ flex: 1 }}>
-          <h6 style={{
-            fontFamily: "'Nunito', sans-serif",
-            fontWeight: 700,
-            fontSize: '0.87rem',
-            color: '#1e3a50',
-            marginBottom: '4px',
-            lineHeight: 1.35,
-          }}>
+          <h6 style={{ fontFamily: "'Nunito', sans-serif", fontWeight: 700, fontSize: '0.87rem', color: '#1e3a50', marginBottom: '4px', lineHeight: 1.35 }}>
             {resource.title}
           </h6>
           <p style={{ color: '#7a9db5', fontSize: '0.74rem', margin: 0, fontWeight: 500 }}>
@@ -80,15 +67,9 @@ function ResourceCard({ resource }: { resource: Resource }) {
       <div style={{ flex: 1 }} />
       <div style={{ marginTop: '0.5rem' }}>
         <span style={{
-          display: 'inline-block',
-          background: '#edf5fa',
-          color: '#3a7a9e',
-          border: '1px solid #b8d4e4',
-          borderRadius: '5px',
-          padding: '2px 9px',
-          fontSize: '0.7rem',
-          fontWeight: 700,
-          letterSpacing: '0.05em',
+          display: 'inline-block', background: '#edf5fa', color: '#3a7a9e',
+          border: '1px solid #b8d4e4', borderRadius: '5px', padding: '2px 9px',
+          fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.05em',
         }}>
           {resource.fileType}
         </span>
@@ -115,10 +96,7 @@ export default function HomePage() {
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Lora:wght@400;600;700&display=swap');
         * { box-sizing: border-box; }
         body { background: #f2f7fb !important; margin: 0; }
-        .cc-nav-link { color: #4a6a80 !important; font-size: 0.84rem !important; font-weight: 600 !important; font-family: 'Nunito', sans-serif !important; }
-        .cc-nav-link:hover { color: #1a3a50 !important; }
         .cc-dropdown-toggle { color: #4a6a80 !important; font-size: 0.84rem !important; font-weight: 600 !important; }
-        .cc-dropdown-toggle::after { margin-left: 5px; }
         .dropdown-menu { border: 1px solid #dce8f0 !important; border-radius: 8px !important; box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important; min-width: 160px !important; }
         .dropdown-item { font-size: 0.82rem !important; color: #4a6a80 !important; padding: 7px 16px !important; }
         .dropdown-item:hover { background: #f0f6fa !important; color: #1a3a50 !important; }
@@ -128,120 +106,79 @@ export default function HomePage() {
         .cat-pill.active { background: linear-gradient(135deg,#2e7da8,#4a9eca) !important; color: #fff !important; border-color: transparent !important; box-shadow: 0 3px 10px rgba(46,125,168,0.22); }
         .cat-pill:not(.active) { background: #fff; color: #4a6a80; }
         .cat-pill:not(.active):hover { background: #edf5fa !important; color: #1a3a50 !important; }
-        .profile-btn { 
-          background: linear-gradient(135deg, #2e7da8, #4a9eca);
-          border: none;
-          color: white;
-          font-family: 'Nunito', sans-serif;
-          font-weight: 700;
-          font-size: 0.82rem;
-          border-radius: 7px;
-          padding: 6px 18px;
-          margin-left: 8px;
-          text-decoration: none;
-          display: inline-block;
-          transition: opacity 0.2s;
-        }
-        .profile-btn:hover {
-          opacity: 0.9;
-          color: white;
-        }
-        .profile-btn.outline {
-          background: transparent;
-          border: 1.5px solid #4a90b8;
-          color: #4a6a80;
-        }
-        .profile-btn.outline:hover {
-          background: #e6f0f7;
-          color: #1a3a50;
-        }
+        .nav-auth-btn { display: inline-block; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.82rem; border-radius: 7px; padding: 5px 18px; text-decoration: none; transition: all 0.2s; }
+        .nav-auth-btn:hover { opacity: 0.88; }
       `}</style>
 
+      {/* ── Navbar ── */}
       <Navbar expand="md" style={{
-        background: '#fff',
-        borderBottom: '1px solid #dce8f0',
-        padding: '0.55rem 0',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
+        background: '#fff', borderBottom: '1px solid #dce8f0',
+        padding: '0.55rem 0', position: 'sticky', top: 0, zIndex: 100,
         boxShadow: '0 1px 6px rgba(0,0,0,0.05)',
       }}>
         <Container>
           <Navbar.Toggle style={{ border: '1px solid #dce8f0', padding: '4px 8px' }} />
 
-          <Navbar.Brand href="/" style={{
-            fontFamily: "'Lora', serif",
-            fontWeight: 700,
-            color: '#1a3a50',
-            fontSize: '1.35rem',
-            marginLeft: '6px',
+          <Navbar.Brand as={Link} to="/" style={{
+            fontFamily: "'Lora', serif", fontWeight: 700,
+            color: '#1a3a50', fontSize: '1.35rem', marginLeft: '6px',
           }}>
             CampusCloud
           </Navbar.Brand>
 
           <Navbar.Collapse>
             <Nav className="ms-auto align-items-center gap-1">
-              {/* Existing dropdowns */}
+
+              {/* Resources dropdown */}
               <NavDropdown title="Resources" id="res-dd" className="cc-dropdown-toggle">
                 {['Lecture Notes', 'Past Papers', 'Assignments', 'Books', 'Lab Reports'].map(c => (
-                  <NavDropdown.Item key={c} onClick={() => { setActiveCategory(c); }}>{c}</NavDropdown.Item>
+                  <NavDropdown.Item key={c} onClick={() => setActiveCategory(c)}>{c}</NavDropdown.Item>
                 ))}
                 <NavDropdown.Divider />
                 <NavDropdown.Item onClick={() => setActiveCategory('All')}>All Resources</NavDropdown.Item>
               </NavDropdown>
 
+              {/* Admin dropdown */}
               <NavDropdown title="Admin" id="admin-dd" className="cc-dropdown-toggle">
-                <NavDropdown.Item href="/admin/login">Admin Login</NavDropdown.Item>
-                <NavDropdown.Item href="/admin/dashboard">Dashboard</NavDropdown.Item>
+                <NavDropdown.Item as={Link} to="/login">Admin Login</NavDropdown.Item>
+                <NavDropdown.Item as={Link} to="/admin">Dashboard</NavDropdown.Item>
               </NavDropdown>
 
-              {/* NEW: Profile buttons */}
-              <Link to="/profile" className="profile-btn outline" style={{ marginLeft: '8px' }}>
-                👤 Student Profile
-              </Link>
-              <Link to="/admin" className="profile-btn" style={{ marginLeft: '4px' }}>
-                👑 Admin Profile
+              {/* Student Profile */}
+              <Link to="/profile" className="nav-auth-btn" style={{
+                marginLeft: '8px', background: 'transparent',
+                border: '1.5px solid #a8c4d4', color: '#4a6a80',
+              }}>
+                👤 Profile
               </Link>
 
-              {/* Original login/register buttons (optional, you can keep them) */}
-              <Button variant="outline-secondary" size="sm" style={{
-                borderColor: '#a8c4d4',
-                color: '#4a6a80',
-                fontFamily: "'Nunito', sans-serif",
-                fontWeight: 700,
-                fontSize: '0.82rem',
-                borderRadius: '7px',
-                padding: '5px 18px',
-                marginLeft: '6px',
+              {/* Login */}
+              <Link to="/login" className="nav-auth-btn" style={{
+                marginLeft: '4px', background: 'transparent',
+                border: '1.5px solid #a8c4d4', color: '#4a6a80',
               }}>
                 Login
-              </Button>
+              </Link>
 
-              <Button size="sm" style={{
-                background: 'linear-gradient(135deg, #2e7da8, #4a9eca)',
-                border: 'none',
-                color: '#fff',
-                fontFamily: "'Nunito', sans-serif",
-                fontWeight: 700,
-                fontSize: '0.82rem',
-                borderRadius: '7px',
-                padding: '5px 18px',
+              {/* Register */}
+              <Link to="/register" className="nav-auth-btn" style={{
                 marginLeft: '4px',
+                background: 'linear-gradient(135deg, #2e7da8, #4a9eca)',
+                border: 'none', color: '#fff',
               }}>
                 Register
-              </Button>
+              </Link>
+
             </Nav>
           </Navbar.Collapse>
         </Container>
       </Navbar>
 
-      {/* Hero section - unchanged */}
+      {/* ── Hero Banner ── */}
       <div style={{
         background: 'linear-gradient(135deg, #cfe5f2 0%, #dff0f8 40%, #c8dff0 100%)',
-        borderBottom: '1px solid #b8d4e4',
-        padding: '2.8rem 0',
-        position: 'relative',
-        overflow: 'hidden',
+        borderBottom: '1px solid #b8d4e4', padding: '2.8rem 0',
+        position: 'relative', overflow: 'hidden',
       }}>
         <div style={{ position: 'absolute', top: '-50px', left: '-50px', width: '220px', height: '220px', borderRadius: '50%', background: 'rgba(100,160,200,0.07)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: '-60px', right: '8%', width: '260px', height: '260px', borderRadius: '50%', background: 'rgba(80,140,180,0.06)', pointerEvents: 'none' }} />
@@ -250,24 +187,15 @@ export default function HomePage() {
           <Row className="align-items-center">
             <Col md={5}>
               <h1 style={{
-                fontFamily: "'Lora', serif",
-                fontWeight: 700,
-                fontSize: 'clamp(1.5rem, 3vw, 2rem)',
-                color: '#1a3a50',
-                lineHeight: 1.35,
-                marginBottom: '1.5rem',
+                fontFamily: "'Lora', serif", fontWeight: 700,
+                fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: '#1a3a50',
+                lineHeight: 1.35, marginBottom: '1.5rem',
               }}>
                 Find and share the best study materials.
               </h1>
 
               <InputGroup style={{ borderRadius: '8px', overflow: 'hidden', boxShadow: '0 3px 14px rgba(0,0,0,0.1)' }}>
-                <InputGroup.Text style={{
-                  background: '#fff',
-                  border: '1.5px solid #a8c4d4',
-                  borderRight: 'none',
-                  color: '#8ab4cc',
-                  paddingLeft: '13px',
-                }}>
+                <InputGroup.Text style={{ background: '#fff', border: '1.5px solid #a8c4d4', borderRight: 'none', color: '#8ab4cc', paddingLeft: '13px' }}>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
                   </svg>
@@ -278,24 +206,15 @@ export default function HomePage() {
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   style={{
-                    border: '1.5px solid #a8c4d4',
-                    borderLeft: 'none',
-                    borderRight: 'none',
-                    color: '#1e3a50',
-                    fontSize: '0.87rem',
-                    padding: '10px 10px',
-                    background: '#fff',
-                    fontFamily: "'Nunito', sans-serif",
+                    border: '1.5px solid #a8c4d4', borderLeft: 'none', borderRight: 'none',
+                    color: '#1e3a50', fontSize: '0.87rem', padding: '10px',
+                    background: '#fff', fontFamily: "'Nunito', sans-serif",
                   }}
                 />
                 <Button style={{
-                  background: 'linear-gradient(135deg, #2e7da8, #4a9eca)',
-                  border: 'none',
-                  color: '#fff',
-                  fontFamily: "'Nunito', sans-serif",
-                  fontWeight: 700,
-                  fontSize: '0.87rem',
-                  padding: '10px 22px',
+                  background: 'linear-gradient(135deg, #2e7da8, #4a9eca)', border: 'none',
+                  color: '#fff', fontFamily: "'Nunito', sans-serif", fontWeight: 700,
+                  fontSize: '0.87rem', padding: '10px 22px',
                 }}>
                   Find
                 </Button>
@@ -305,17 +224,10 @@ export default function HomePage() {
             <Col md={7} className="mt-4 mt-md-0" style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <div style={{
                 background: 'linear-gradient(135deg, #b8d4e4 0%, #cce4f0 100%)',
-                borderRadius: '16px',
-                border: '1px solid #a0c4d8',
-                width: '100%',
-                maxWidth: '400px',
-                minHeight: '180px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '1.5rem',
-                position: 'relative',
-                overflow: 'hidden',
+                borderRadius: '16px', border: '1px solid #a0c4d8', width: '100%',
+                maxWidth: '400px', minHeight: '180px', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', padding: '1.5rem',
+                position: 'relative', overflow: 'hidden',
                 boxShadow: '0 4px 20px rgba(46,100,140,0.12)',
               }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
@@ -331,22 +243,10 @@ export default function HomePage() {
                     ))}
                   </div>
                 </div>
-                <div style={{
-                  position: 'absolute', top: '12px', right: '14px',
-                  background: '#fff', borderRadius: '7px', padding: '4px 10px',
-                  fontSize: '0.67rem', fontWeight: 700, color: '#2e7da8',
-                  border: '1px solid #a8c4d4', boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                  fontFamily: "'Nunito', sans-serif",
-                }}>
+                <div style={{ position: 'absolute', top: '12px', right: '14px', background: '#fff', borderRadius: '7px', padding: '4px 10px', fontSize: '0.67rem', fontWeight: 700, color: '#2e7da8', border: '1px solid #a8c4d4', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', fontFamily: "'Nunito', sans-serif" }}>
                   📚 800+ Resources
                 </div>
-                <div style={{
-                  position: 'absolute', bottom: '12px', left: '14px',
-                  background: '#fff', borderRadius: '7px', padding: '4px 10px',
-                  fontSize: '0.67rem', fontWeight: 700, color: '#3a8a5e',
-                  border: '1px solid #b8d8c8', boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                  fontFamily: "'Nunito', sans-serif",
-                }}>
+                <div style={{ position: 'absolute', bottom: '12px', left: '14px', background: '#fff', borderRadius: '7px', padding: '4px 10px', fontSize: '0.67rem', fontWeight: 700, color: '#3a8a5e', border: '1px solid #b8d8c8', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', fontFamily: "'Nunito', sans-serif" }}>
                   ✅ Approved Only
                 </div>
               </div>
@@ -355,16 +255,10 @@ export default function HomePage() {
         </Container>
       </div>
 
-      {/* Main content - unchanged */}
+      {/* ── Browse Section ── */}
       <Container style={{ padding: '2.5rem 1rem 3.5rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <h2 style={{
-            fontFamily: "'Lora', serif",
-            fontWeight: 700,
-            fontSize: '1.45rem',
-            color: '#1a3a50',
-            marginBottom: '0.35rem',
-          }}>
+          <h2 style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: '1.45rem', color: '#1a3a50', marginBottom: '0.35rem' }}>
             Browse new study materials
           </h2>
           <p style={{ color: '#7a9db5', fontSize: '0.83rem', margin: 0 }}>
@@ -372,18 +266,16 @@ export default function HomePage() {
           </p>
         </div>
 
+        {/* Category pills */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '2rem', flexWrap: 'wrap' }}>
           {CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              className={`cat-pill ${activeCategory === cat ? 'active' : ''}`}
-              onClick={() => setActiveCategory(cat)}
-            >
+            <button key={cat} className={`cat-pill ${activeCategory === cat ? 'active' : ''}`} onClick={() => setActiveCategory(cat)}>
               {cat}
             </button>
           ))}
         </div>
 
+        {/* Results info */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <p style={{ color: '#7a9db5', fontSize: '0.78rem', margin: 0 }}>
             Showing <strong style={{ color: '#2e7da8' }}>{filtered.length}</strong> result{filtered.length !== 1 ? 's' : ''}
@@ -396,6 +288,7 @@ export default function HomePage() {
           )}
         </div>
 
+        {/* Resource grid */}
         {filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem', color: '#7a9db5' }}>
             <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔍</div>
@@ -411,16 +304,12 @@ export default function HomePage() {
           </Row>
         )}
 
+        {/* View all */}
         <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
           <Button style={{
-            background: 'linear-gradient(135deg, #2e7da8, #4a9eca)',
-            border: 'none',
-            fontFamily: "'Nunito', sans-serif",
-            fontWeight: 700,
-            fontSize: '0.85rem',
-            borderRadius: '8px',
-            padding: '10px 30px',
-            color: '#fff',
+            background: 'linear-gradient(135deg, #2e7da8, #4a9eca)', border: 'none',
+            fontFamily: "'Nunito', sans-serif", fontWeight: 700, fontSize: '0.85rem',
+            borderRadius: '8px', padding: '10px 30px', color: '#fff',
             boxShadow: '0 4px 14px rgba(46,125,168,0.28)',
           }}>
             View All Resources →
@@ -428,19 +317,9 @@ export default function HomePage() {
         </div>
       </Container>
 
-      <footer style={{
-        background: '#cce0ed',
-        borderTop: '1px solid #b0ccdc',
-        padding: '1.4rem 0',
-        textAlign: 'center',
-      }}>
-        <p style={{
-          color: '#4a6a80',
-          fontSize: '0.82rem',
-          fontFamily: "'Nunito', sans-serif",
-          margin: 0,
-          fontWeight: 600,
-        }}>
+      {/* ── Footer ── */}
+      <footer style={{ background: '#cce0ed', borderTop: '1px solid #b0ccdc', padding: '1.4rem 0', textAlign: 'center' }}>
+        <p style={{ color: '#4a6a80', fontSize: '0.82rem', fontFamily: "'Nunito', sans-serif", margin: 0, fontWeight: 600 }}>
           © 2026 CampusCloud. All rights reserved. For academic use only.
         </p>
       </footer>
