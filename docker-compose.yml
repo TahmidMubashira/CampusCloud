@@ -1,0 +1,51 @@
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: CampusCloud
+        APP_ENV: local
+        APP_KEY: base64:tIsNemE2+adC0gYrelyw8hDdk1nornuoMu8G+Tzbigc=
+        APP_DEBUG: "true"
+        APP_URL: http://localhost
+        FRONTEND_URL: http://localhost
+        LOG_LEVEL: debug
+        DB_CONNECTION: sqlsrv
+        DB_HOST: database
+        DB_PORT: 1433
+        DB_DATABASE: campuscloud
+        DB_USERNAME: campuscloud_user
+        DB_PASSWORD: Campus@123
+        VITE_BACKEND_ENDPOINT: http://localhost
+    container_name: campuscloud_app
+    ports:
+      - "80:80"
+    depends_on:
+      - database
+    networks:
+      - campuscloud_network
+
+  database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: campuscloud_db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Campus@123"
+      MSSQL_PID: "Express"
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    networks:
+      - campuscloud_network
+    restart: unless-stopped
+
+volumes:
+  mssql_data:
+    driver: local
+
+networks:
+  campuscloud_network:
+    driver: bridge

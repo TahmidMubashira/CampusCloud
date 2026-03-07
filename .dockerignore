@@ -1,5 +1,8 @@
-**/vendor
-**/node_modules
-**/dist
-.env
-.env.local
+server/vendor/
+client/node_modules/
+server/.env
+client/.env
+.git
+client/dist/
+server/storage/logs/*
+server/bootstrap/cache/*

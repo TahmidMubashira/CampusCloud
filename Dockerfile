@@ -15,7 +15,6 @@ ARG DB_PORT
 ARG DB_DATABASE
 ARG DB_USERNAME
 ARG DB_PASSWORD
-
 ARG VITE_BACKEND_ENDPOINT
 
 # Install system dependencies
@@ -27,30 +26,44 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     zip \
     unzip \
-    nodejs \
-    npm
+    gnupg2 \
+    apt-transport-https \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 20 (more reliable than apt nodejs)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Enable mod_rewrite
 RUN a2enmod rewrite
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+# Add Microsoft repo and install ODBC driver
+RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
+    && echo "deb [arch=amd64,arm64,armhf signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/mssql-release.list \
+    && apt-get update \
+    && ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install sqlsrv PHP extensions
+RUN pecl install sqlsrv-5.12.0 pdo_sqlsrv-5.12.0 \
+    && docker-php-ext-enable sqlsrv pdo_sqlsrv \
+    && echo "extension=sqlsrv.so" >> /usr/local/etc/php/php.ini \
+    && echo "extension=pdo_sqlsrv.so" >> /usr/local/etc/php/php.ini
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+RUN docker-php-ext-install mbstring exif pcntl bcmath gd
 
-# By default, Apache serves files from /var/www/html.
-# Laravel expects the document root to point to the public directory of its project structure for proper routing and security.
-# These commands update Apache’s configuration so that it serves files from /var/www/html/public instead, aligning it with Laravel's structure.
+# Set Apache document root to Laravel public directory
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Copy the application code to the html folder
-# COPY . /var/www/html
 
 # Copy Laravel backend code
 COPY server/ /var/www/html
@@ -63,34 +76,40 @@ WORKDIR /var/www/html
 RUN composer install
 
 # Set environment variables for server
-RUN touch .env
-RUN echo "APP_NAME=${APP_NAME}" >> .env && \
+RUN touch .env && \
+    echo "APP_NAME=${APP_NAME}" >> .env && \
     echo "APP_ENV=${APP_ENV}" >> .env && \
     echo "APP_KEY=${APP_KEY}" >> .env && \
     echo "APP_DEBUG=${APP_DEBUG}" >> .env && \
+    echo "APP_URL=${APP_URL}" >> .env && \
     echo "FRONTEND_URL=${FRONTEND_URL}" >> .env && \
     echo "LOG_LEVEL=${LOG_LEVEL}" >> .env && \
     echo "DB_CONNECTION=${DB_CONNECTION}" >> .env && \
     echo "DB_HOST=${DB_HOST}" >> .env && \
+    echo "DB_PORT=${DB_PORT}" >> .env && \
     echo "DB_DATABASE=${DB_DATABASE}" >> .env && \
-    echo "DB_DATABASE=${DB_USERNAME}" >> .env && \
-    echo "DB_DATABASE=${DB_PASSWORD}" >> .env && \
-    echo "DB_PORT=${DB_PORT}" >> .env
+    echo "DB_USERNAME=${DB_USERNAME}" >> .env && \
+    echo "DB_PASSWORD=${DB_PASSWORD}" >> .env && \
+    echo "SANCTUM_STATEFUL_DOMAINS=localhost:5173" >> .env && \
+    echo "SESSION_DRIVER=cookie" >> .env && \
+    echo "SESSION_DOMAIN=localhost" >> .env
 
-# Set permissions for Laravel storage and cache
-RUN chown -R www-data:www-data /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html && \
+    chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# RUN ls -a
-# RUN echo "hello wrld"
+# Build React frontend
+WORKDIR /var/www/html/client
+RUN echo "VITE_BACKEND_ENDPOINT=${VITE_BACKEND_ENDPOINT}" > .env
+RUN npm install
+RUN npm run build
 
-RUN cd client && npm install && npm run build
-
-# # Move React build to Laravel public directory
+# Move React build to Laravel public directory
+WORKDIR /var/www/html
 RUN cp -r client/dist/* public/
 
-# # Expose port 80 for Apache
+# Expose port 80 for Apache
 EXPOSE 80
 
-# FROM php:8.2-apache
-# # Start Apache server
-# CMD ["apache2-foreground"]
+# Start Apache
+CMD ["apache2-foreground"]
