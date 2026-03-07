@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Container, Row, Col, Button, Form, InputGroup, Nav, Navbar, NavDropdown } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface Resource {
   id: number;
@@ -79,6 +79,7 @@ function ResourceCard({ resource }: { resource: Resource }) {
 }
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
 
@@ -88,6 +89,10 @@ export default function HomePage() {
     const matchCategory = activeCategory === 'All' || r.category === activeCategory;
     return matchSearch && matchCategory;
   });
+
+  const handleViewAllResources = () => {
+    navigate('/resources');
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: '#f2f7fb', fontFamily: "'Nunito', sans-serif" }}>
@@ -129,27 +134,40 @@ export default function HomePage() {
           <Navbar.Collapse>
             <Nav className="ms-auto align-items-center gap-1">
 
-              {/* Resources dropdown */}
+              {/* Resources dropdown - NOW LINKS TO RESOURCES PAGE */}
               <NavDropdown title="Resources" id="res-dd" className="cc-dropdown-toggle">
                 {['Lecture Notes', 'Past Papers', 'Assignments', 'Books', 'Lab Reports'].map(c => (
-                  <NavDropdown.Item key={c} onClick={() => setActiveCategory(c)}>{c}</NavDropdown.Item>
+                  <NavDropdown.Item 
+                    key={c} 
+                    onClick={() => {
+                      setActiveCategory(c);
+                      navigate('/resources');
+                    }}
+                  >
+                    {c}
+                  </NavDropdown.Item>
                 ))}
                 <NavDropdown.Divider />
-                <NavDropdown.Item onClick={() => setActiveCategory('All')}>All Resources</NavDropdown.Item>
+                <NavDropdown.Item onClick={() => {
+                  setActiveCategory('All');
+                  navigate('/resources');
+                }}>
+                  All Resources
+                </NavDropdown.Item>
               </NavDropdown>
 
-              {/* Admin dropdown */}
+              {/* Admin dropdown - NOW LINKS TO ADMIN PROFILE */}
               <NavDropdown title="Admin" id="admin-dd" className="cc-dropdown-toggle">
                 <NavDropdown.Item as={Link} to="/login">Admin Login</NavDropdown.Item>
-                <NavDropdown.Item as={Link} to="/admin">Dashboard</NavDropdown.Item>
+                <NavDropdown.Item as={Link} to="/admin">Admin Dashboard</NavDropdown.Item>
               </NavDropdown>
 
-              {/* Student Profile */}
+              {/* Student Profile - NOW LINKS TO STUDENT PROFILE */}
               <Link to="/profile" className="nav-auth-btn" style={{
                 marginLeft: '8px', background: 'transparent',
                 border: '1.5px solid #a8c4d4', color: '#4a6a80',
               }}>
-                👤 Profile
+                👤 Student Profile
               </Link>
 
               {/* Login */}
@@ -211,11 +229,14 @@ export default function HomePage() {
                     background: '#fff', fontFamily: "'Nunito', sans-serif",
                   }}
                 />
-                <Button style={{
-                  background: 'linear-gradient(135deg, #2e7da8, #4a9eca)', border: 'none',
-                  color: '#fff', fontFamily: "'Nunito', sans-serif", fontWeight: 700,
-                  fontSize: '0.87rem', padding: '10px 22px',
-                }}>
+                <Button 
+                  onClick={() => navigate('/resources')}
+                  style={{
+                    background: 'linear-gradient(135deg, #2e7da8, #4a9eca)', border: 'none',
+                    color: '#fff', fontFamily: "'Nunito', sans-serif", fontWeight: 700,
+                    fontSize: '0.87rem', padding: '10px 22px',
+                  }}
+                >
                   Find
                 </Button>
               </InputGroup>
@@ -266,10 +287,19 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* Category pills */}
+        {/* Category pills - NOW LINK TO RESOURCES PAGE WITH FILTER */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '2rem', flexWrap: 'wrap' }}>
           {CATEGORIES.map(cat => (
-            <button key={cat} className={`cat-pill ${activeCategory === cat ? 'active' : ''}`} onClick={() => setActiveCategory(cat)}>
+            <button 
+              key={cat} 
+              className={`cat-pill ${activeCategory === cat ? 'active' : ''}`} 
+              onClick={() => {
+                setActiveCategory(cat);
+                if (cat !== 'All') {
+                  navigate('/resources');
+                }
+              }}
+            >
               {cat}
             </button>
           ))}
@@ -288,7 +318,7 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Resource grid */}
+        {/* Resource grid - NOW CLICKABLE TO RESOURCES PAGE */}
         {filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem', color: '#7a9db5' }}>
             <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔍</div>
@@ -298,20 +328,26 @@ export default function HomePage() {
           <Row className="g-3">
             {filtered.map(r => (
               <Col key={r.id} xs={12} sm={6} md={4}>
-                <ResourceCard resource={r} />
+                <div onClick={() => navigate('/resources')} style={{ cursor: 'pointer' }}>
+                  <ResourceCard resource={r} />
+                </div>
               </Col>
             ))}
           </Row>
         )}
 
-        {/* View all */}
+        {/* View all - NOW WORKING LINK */}
         <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
-          <Button style={{
-            background: 'linear-gradient(135deg, #2e7da8, #4a9eca)', border: 'none',
-            fontFamily: "'Nunito', sans-serif", fontWeight: 700, fontSize: '0.85rem',
-            borderRadius: '8px', padding: '10px 30px', color: '#fff',
-            boxShadow: '0 4px 14px rgba(46,125,168,0.28)',
-          }}>
+          <Button 
+            onClick={handleViewAllResources}
+            style={{
+              background: 'linear-gradient(135deg, #2e7da8, #4a9eca)', border: 'none',
+              fontFamily: "'Nunito', sans-serif", fontWeight: 700, fontSize: '0.85rem',
+              borderRadius: '8px', padding: '10px 30px', color: '#fff',
+              boxShadow: '0 4px 14px rgba(46,125,168,0.28)',
+              cursor: 'pointer'
+            }}
+          >
             View All Resources →
           </Button>
         </div>
