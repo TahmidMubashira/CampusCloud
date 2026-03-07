@@ -47,9 +47,17 @@ export function LoginPage() {
     }
     setLoading(true);
     try {
+      // Step 1: Get CSRF cookie first
+      await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/sanctum/csrf-cookie`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      // Step 2: Then login
       const res = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(form),
       });
       const data = await res.json();
@@ -188,7 +196,7 @@ export function LoginPage() {
   );
 }
 
-// ─── Register Page ────────────────────────────────────────────────────────────
+// Register Page 
 export function RegisterPage() {
   const [form, setForm] = useState({ name: '', email: '', password: '', password_confirmation: '', role: 'student' });
   const [loading, setLoading] = useState(false);
@@ -216,9 +224,17 @@ export function RegisterPage() {
     }
     setLoading(true);
     try {
+      // Step 1: Get CSRF cookie first
+      await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/sanctum/csrf-cookie`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      // Step 2: Then register
       const res = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(form),
       });
       const data = await res.json();
