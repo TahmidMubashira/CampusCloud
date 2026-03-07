@@ -45,4 +45,13 @@ class ResourceController extends Controller
 
         return response()->json($resources);
     }
+
+    public function download($id)
+    {
+        $resource = Resource::findOrFail($id);
+
+        $resource->increment('downloads');
+
+        return Storage::download($resource->file_path);
+    }
 }
