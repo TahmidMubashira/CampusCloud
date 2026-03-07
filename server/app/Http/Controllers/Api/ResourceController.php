@@ -38,4 +38,11 @@ class ResourceController extends Controller
 
         return response()->json($resource);
     }
+
+    public function index()
+    {
+        $resources = Resource::latest()->get();
+
+        return response()->json($resources);
+    }
 }
