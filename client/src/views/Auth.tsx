@@ -2,9 +2,6 @@ import { useState } from 'react';
 import { Container, Row, Col, Form, Button, Alert } from 'react-bootstrap';
 
 
-interface AuthProps {
-  mode?: 'login' | 'register';
-}
 
 
 const inputStyle = {
