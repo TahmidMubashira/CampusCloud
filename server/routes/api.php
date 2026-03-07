@@ -21,6 +21,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
 Route::post('/resources/upload', [ResourceController::class, 'upload']);
 Route::get('/resources', [ResourceController::class, 'index']);
+Route::get('/download/{id}', [ResourceController::class, 'download']);
 
 
 Route::middleware('auth:sanctum')->group(function () {
