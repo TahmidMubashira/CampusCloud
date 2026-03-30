@@ -412,8 +412,13 @@ export default function ResourcesPage() {
     if (formData.file) data.append('file', formData.file);
 
     try {
-      const response = await fetch('/api/upload', {
+      const token = localStorage.getItem('token');
+
+      const response = await fetch('/api/resources/upload', {
         method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: data,
       });
 
@@ -423,48 +428,35 @@ export default function ResourcesPage() {
         const updated = await fetch('/api/resources');
         setResources(await updated.json());
       } else {
-        // Add to local state if API fails
-        const newResource: Resource = {
-          id: Date.now(),
-          title: formData.title,
-          description: formData.description,
-          department: formData.department,
-          courseCode: formData.courseCode,
-          fileType: formData.file?.name.split('.').pop()?.toUpperCase() || 'PDF',
-          fileSize: formData.file ? `${(formData.file.size / 1024 / 1024).toFixed(1)} MB` : '1.0 MB',
-          uploadedBy: 'You',
-          uploadedAt: new Date().toISOString().split('T')[0],
-          downloads: 0,
-        };
-        setResources([newResource, ...resources]);
-        toast.success('Resource added (offline mode)');
+        // REPLACE the offline mode fallback with this:
+        const err = await response.json().catch(() => ({ message: 'Unknown error' }));
+        toast.error(`Upload failed (${response.status}): ${err.message || JSON.stringify(err)}`);
       }
-    } catch (error) {
-      // Add to local state on error
-      const newResource: Resource = {
-        id: Date.now(),
-        title: formData.title,
-        description: formData.description,
-        department: formData.department,
-        courseCode: formData.courseCode,
-        fileType: formData.file?.name.split('.').pop()?.toUpperCase() || 'PDF',
-        fileSize: formData.file ? `${(formData.file.size / 1024 / 1024).toFixed(1)} MB` : '1.0 MB',
-        uploadedBy: 'You',
-        uploadedAt: new Date().toISOString().split('T')[0],
-        downloads: 0,
-      };
-      setResources([newResource, ...resources]);
-      toast.success('Resource added (offline mode)');
+    } 
+    catch (error) {
+      toast.error(`Network error: ${error}`);
     }
   };
 
   // Handle download
-  const handleDownload = (id: number) => {
-    const resource = resources.find(r => r.id === id);
-    if (resource) {
-      toast.success(`Downloading ${resource.title}...`);
-      // In a real app, you would trigger the actual download here
+  const handleDownload = async (id: number) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`/api/download/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) {
+      toast.error('Download failed. Please try again.');
+      return;
     }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '';
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // Filter resources
