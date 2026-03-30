@@ -70,9 +70,16 @@ class ResourceController extends Controller
     public function download($id)
     {
         $resource = Resource::findOrFail($id);
-
         $resource->increment('downloads');
 
-        return Storage::disk('public')->download($resource->file_path);
+        $path = Storage::disk('public')->path($resource->file_path);
+
+        if (!file_exists($path)) {
+            return response()->json(['error' => 'File not found on server'], 404);
+        }
+
+        $filename = $resource->title . '.' . strtolower($resource->file_type);
+
+        return response()->download($path, $filename);
     }
 }
