@@ -18,6 +18,12 @@ class Resource extends Model
         'file_path',
         'file_type',
         'file_size',
-        'downloads'
+        'downloads',
+        'user_id'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

@@ -4,7 +4,7 @@ import StudentProfile from './views/StudentProfile';
 import AdminPage from './views/AdminPage';
 import ResourcesPage from './views/ResourcesPage';
 import { LoginPage, RegisterPage } from './views/Auth';
-import RewardsPage from './views/RewardsPage';
+import RewardsPage from './views/Rewardspage';
 import UploadPage from './views/Uploadpage';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
