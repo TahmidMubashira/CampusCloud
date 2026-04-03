@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
 const NAV_ITEMS = [
   { label: 'Home', to: '/', icon: '🏠' },
@@ -79,6 +81,45 @@ function Sidebar({ active }: { active: string }) {
 }
 
 export default function RewardsPage() {
+  const [rewards, setRewards] = useState([]);
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchRewards();
+  }, []);
+
+  const fetchRewards = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      const response = await axios.get('http://localhost:8000/api/my-rewards', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setRewards(response.data);
+      // Fix: Ensure points are treated as numbers
+      const points = response.data.reduce((sum: number, reward: any) => sum + Number(reward.points_earned), 0);
+      setTotalPoints(points);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching rewards:', error);
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', minHeight: '100vh', background: '#f0f4f8', justifyContent: 'center', alignItems: 'center' }}>
+        <div>Loading rewards...</div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f0f4f8', fontFamily: "'Nunito', sans-serif" }}>
       <style>{`
@@ -88,20 +129,16 @@ export default function RewardsPage() {
 
       <main style={{ flex: 1, padding: '36px 40px', overflowY: 'auto' }}>
 
-        {/* Header */}
         <div style={{ marginBottom: '24px' }}>
           <h1 style={{ fontWeight: 700, fontSize: '1.5rem', color: '#1a3a50', margin: '0 0 4px' }}>
             Rewards And Points
           </h1>
           <p style={{ color: '#7a9db5', fontSize: '0.83rem', margin: 0 }}>
-            Track Your contributions and earn rewards for helping the community
+            Track your contributions and earn rewards for helping the community
           </p>
         </div>
 
-        {/* Stat Cards */}
         <div style={{ display: 'flex', gap: '16px', marginBottom: '32px' }}>
-
-          {/* Total Points Earned */}
           <div style={{
             flex: 1,
             background: '#fff',
@@ -109,59 +146,72 @@ export default function RewardsPage() {
             padding: '22px 24px',
             border: '1px solid #dce8f0',
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div style={{ fontSize: '0.78rem', color: '#7a9db5', fontWeight: 600, marginBottom: '10px' }}>
-                Total Points earned
-              </div>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7a9db5" strokeWidth="1.5">
-                <circle cx="12" cy="8" r="6" /><path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12" />
-              </svg>
+            <div style={{ fontSize: '0.78rem', color: '#7a9db5', fontWeight: 600, marginBottom: '10px' }}>
+              Total Points Earned
             </div>
             <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1a3a50', lineHeight: 1, marginBottom: '8px' }}>
-              133
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', color: '#7a9db5' }}>
-              <span style={{ color: '#4aaa7a', fontWeight: 700 }}>↑</span>
-              <span>13 Points this month</span>
-            </div>
-          </div>
-
-          {/* Your Rank */}
-          <div style={{
-            flex: 1,
-            background: '#fff',
-            borderRadius: '12px',
-            padding: '22px 24px',
-            border: '1px solid #dce8f0',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div style={{ fontSize: '0.78rem', color: '#7a9db5', fontWeight: 600, marginBottom: '10px' }}>
-                Your Rank
-              </div>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7a9db5" strokeWidth="1.5">
-                <polyline points="21 8 21 21 3 21 3 8" /><rect x="1" y="3" width="22" height="5" />
-                <line x1="12" y1="12" x2="12" y2="21" />
-                <path d="M12 8c0-2 2-4 4-2s0 4-4 4" /><path d="M12 8c0-2-2-4-4-2s0 4 4 4" />
-              </svg>
-            </div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1a3a50', lineHeight: 1, marginBottom: '8px' }}>
-              #33
+              {totalPoints}
             </div>
             <div style={{ fontSize: '0.72rem', color: '#7a9db5' }}>
-              Out of 1,223 contributions
+              {rewards.length} reward{rewards.length !== 1 ? 's' : ''} earned
             </div>
           </div>
         </div>
 
-        {/* How to Earn Points */}
+        <div style={{ marginBottom: '32px' }}>
+          <h2 style={{ fontWeight: 700, fontSize: '1.1rem', color: '#1a3a50', margin: '0 0 16px' }}>
+            Recent Rewards
+          </h2>
+
+          {rewards.length === 0 ? (
+            <div style={{
+              background: '#fff',
+              borderRadius: '12px',
+              padding: '40px',
+              textAlign: 'center',
+              border: '1px solid #dce8f0',
+            }}>
+              <p style={{ color: '#7a9db5', margin: 0 }}>No rewards yet. Upload resources to earn points!</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {rewards.map((reward: any) => (
+                <div key={reward.id} style={{
+                  background: '#fff',
+                  borderRadius: '12px',
+                  padding: '16px 20px',
+                  border: '1px solid #dce8f0',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
+                  <div>
+                    <div style={{ fontWeight: 600, color: '#1a3a50', marginBottom: '4px' }}>
+                      {reward.reward_name}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#7a9db5' }}>
+                      {reward.reward_description}
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: '#b0c4d4', marginTop: '6px' }}>
+                      {new Date(reward.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <div style={{
+                    fontWeight: 800, fontSize: '1.1rem', color: '#2e7da8',
+                    background: '#edf5fa', borderRadius: '8px', padding: '6px 16px',
+                  }}>+{reward.points_earned}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div>
           <h2 style={{ fontWeight: 700, fontSize: '1.1rem', color: '#1a3a50', margin: '0 0 16px' }}>
             How to Earn Points
           </h2>
 
           <div style={{ display: 'flex', gap: '16px' }}>
-
-            {/* Upload a Resource */}
             <div style={{
               flex: 1,
               background: '#fff',
@@ -178,15 +228,14 @@ export default function RewardsPage() {
                 </svg>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: '0.83rem', color: '#7a9db5' }}>Earn 40 points</div>
+                <div style={{ fontSize: '0.83rem', color: '#7a9db5' }}>Earn 10 points</div>
                 <div style={{
                   fontWeight: 800, fontSize: '1rem', color: '#2e7da8',
                   background: '#edf5fa', borderRadius: '8px', padding: '4px 14px',
-                }}>+40</div>
+                }}>+10</div>
               </div>
             </div>
 
-            {/* Resource gets Downloaded */}
             <div style={{
               flex: 1,
               background: '#fff',
@@ -203,14 +252,13 @@ export default function RewardsPage() {
                 </svg>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: '0.83rem', color: '#7a9db5' }}>Earns 30 points</div>
+                <div style={{ fontSize: '0.83rem', color: '#7a9db5' }}>Earns 5 points</div>
                 <div style={{
                   fontWeight: 800, fontSize: '1rem', color: '#2e7da8',
                   background: '#edf5fa', borderRadius: '8px', padding: '4px 14px',
-                }}>+30</div>
+                }}>+5</div>
               </div>
             </div>
-
           </div>
         </div>
 

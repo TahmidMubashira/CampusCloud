@@ -28,8 +28,8 @@ class User extends Authenticatable
      * The attributes that should be cast.
      */
     protected $casts = [
-    'email_verified_at' => 'datetime',
-];
+        'email_verified_at' => 'datetime',
+    ];
 
     /**
      * Check if user is admin
@@ -39,13 +39,19 @@ class User extends Authenticatable
         return $this->role === 'admin';
     }
 
-    
-
     /**
      * Check if user is student
      */
     public function isStudent(): bool
     {
         return $this->role === 'student';
+    }
+
+    /**
+     * Get the rewards for the user
+     */
+    public function rewards()
+    {
+        return $this->hasMany(Reward::class);
     }
 }

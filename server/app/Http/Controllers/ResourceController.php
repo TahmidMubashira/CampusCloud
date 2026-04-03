@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Resource;
+use App\Models\Reward;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -10,40 +11,40 @@ class ResourceController extends Controller
 {
     // GET /api/resources
     public function index(Request $request)
-{
-    $query = Resource::with('user')->latest();
+    {
+        $query = Resource::with('user')->latest();
 
-    // Filter by resourceType
-    if ($request->resourceType) {
-        $query->where('resourceType', $request->resourceType);
+        // Filter by resourceType
+        if ($request->resourceType) {
+            $query->where('resourceType', $request->resourceType);
+        }
+
+        // Search by title, department, courseCode
+        if ($request->search) {
+            $query->where(function($q) use ($request) {
+                $q->where('title', 'like', '%'.$request->search.'%')
+                  ->orWhere('department', 'like', '%'.$request->search.'%')
+                  ->orWhere('courseCode', 'like', '%'.$request->search.'%');
+            });
+        }
+
+        $resources = $query->get();
+
+        return response()->json($resources->map(function ($r) {
+            return [
+                'id'         => $r->id,
+                'title'      => $r->title,
+                'description'=> $r->description,
+                'department' => $r->department,
+                'courseCode' => $r->courseCode,
+                'fileType'   => $r->file_type,
+                'fileSize'   => $r->file_size,
+                'uploadedBy' => $r->user->name,
+                'uploadedAt' => $r->created_at->toDateString(),
+                'downloads'  => $r->downloads,
+            ];
+        }));
     }
-
-    // Search by title, department, courseCode
-    if ($request->search) {
-        $query->where(function($q) use ($request) {
-            $q->where('title', 'like', '%'.$request->search.'%')
-              ->orWhere('department', 'like', '%'.$request->search.'%')
-              ->orWhere('courseCode', 'like', '%'.$request->search.'%');
-        });
-    }
-
-    $resources = $query->get();
-
-    return response()->json($resources->map(function ($r) {
-        return [
-            'id'         => $r->id,
-            'title'      => $r->title,
-            'description'=> $r->description,
-            'department' => $r->department,
-            'courseCode' => $r->courseCode,
-            'fileType'   => $r->file_type,
-            'fileSize'   => $r->file_size,
-            'uploadedBy' => $r->user->name,
-            'uploadedAt' => $r->created_at->toDateString(),
-            'downloads'  => $r->downloads,
-        ];
-    }));
-}
 
     // POST /api/upload (AUTH REQUIRED)
     public function store(Request $request)
@@ -73,6 +74,14 @@ class ResourceController extends Controller
             'file_size' => round($file->getSize() / 1024 / 1024, 2) . ' MB',
 
             'user_id' => $request->user()->id
+        ]);
+
+        // ADD REWARD POINTS FOR UPLOADING
+        Reward::create([
+            'user_id' => $request->user()->id,
+            'points_earned' => 10,
+            'reward_name' => 'Resource Upload',
+            'reward_description' => 'You earned 10 points for uploading "' . $request->title . '"',
         ]);
 
         return response()->json([
