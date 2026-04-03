@@ -202,9 +202,13 @@ export default function UploadPage() {
     data.append('resourceType', resourceType);
     data.append('file', file);
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/resources`, {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/resources/upload`, {
         method: 'POST',
         credentials: 'include',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: data,
       });
       const result = await res.json();
@@ -215,8 +219,7 @@ export default function UploadPage() {
         toast.error(result.message || 'Upload failed.');
       }
     } catch {
-      toast.success('Resource submitted! Pending admin approval.');
-      navigate('/profile');
+      toast.error('Network error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -460,7 +463,7 @@ export default function UploadPage() {
                     <div style={{ fontWeight: 600, color: '#4a6a80', fontSize: '0.88rem' }}>
                       Drop your file here or click to browse
                     </div>
-                    <div style={{ fontSize: '0.74rem', color: '#9ab5c5' }}>Maximum file size : 50 MB</div>
+                    <div style={{ fontSize: '0.74rem', color: '#9ab5c5' }}>Maximum file size: 50 MB</div>
                     <div style={{ fontSize: '0.72rem', color: '#9ab5c5' }}>
                       Supported formats: PDF, DOC, DOCX, PPT, PPTX, ZIP
                     </div>

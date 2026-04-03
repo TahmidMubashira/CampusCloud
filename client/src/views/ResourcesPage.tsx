@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Modal, Form, Button, Alert } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 
 // Types
@@ -17,27 +16,18 @@ interface Resource {
   downloads: number;
 }
 
-interface UploadFormData {
-  title: string;
-  description: string;
-  courseCode: string;
-  department: string;
-  resourceType: string;
-  file: File | null;
-}
-
 // Navigation items
 const NAV_ITEMS = [
   { label: 'Home', to: '/', icon: '🏠' },
   { label: 'Resources', to: '/resources', icon: '📄' },
-  { label: 'Upload', to: '/resources', icon: '⬆️' }, // Changed to resources with modal
+  { label: 'Upload', to: '/upload', icon: '⬆️' },
   { label: 'Rewards', to: '/rewards', icon: '🏅' },
   { label: 'Profile', to: '/profile', icon: '👤' },
 ];
 
 const DEPARTMENTS = [
-  'Computer Science', 'Mathematics', 'Physics', 'Chemistry', 
-  'Biology', 'English', 'History', 'Economics', 'EEE', 'IPE'
+  'Computer Science', 'Mathematics', 'Physics', 'Chemistry',
+  'Biology', 'English', 'History', 'Economics', 'EEE', 'IPE',
 ];
 
 const COURSE_CODES = [
@@ -46,12 +36,7 @@ const COURSE_CODES = [
   'PHY101', 'PHY201',
   'CHM101', 'CHM201',
   'BIO101', 'BIO201',
-  'EEE301', 'IPE400'
-];
-
-const RESOURCE_TYPES = [
-  'Lecture Notes', 'Past Papers', 'Assignments',
-  'Books', 'Lab Reports', 'Projects', 'Tutorials',
+  'EEE301', 'IPE400',
 ];
 
 const FILE_TYPES = ['PDF', 'DOCX', 'XLSX', 'PPT', 'ZIP', 'MP4', 'JPG'];
@@ -197,181 +182,10 @@ function Sidebar({ active }: { active: string }) {
   );
 }
 
-// Upload Modal Component
-function UploadModal({ show, onHide, onUpload }: {
-  show: boolean;
-  onHide: () => void;
-  onUpload: (data: UploadFormData) => void;
-}) {
-  const [formData, setFormData] = useState<UploadFormData>({
-    title: '',
-    description: '',
-    courseCode: '',
-    department: '',
-    resourceType: '',
-    file: null,
-  });
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFormData({ ...formData, file: e.target.files[0] });
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.title || !formData.description || !formData.courseCode ||
-        !formData.department || !formData.resourceType || !formData.file) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-    
-    onUpload(formData);
-    setFormData({ title: '', description: '', courseCode: '', department: '', resourceType: '', file: null });
-    onHide();
-  };
-
-  return (
-    <Modal show={show} onHide={onHide} size="lg" centered>
-      <Modal.Header closeButton style={{ borderBottom: '1px solid #dce8f0' }}>
-        <Modal.Title style={{ fontWeight: 700, color: '#1a3a50' }}>
-          Upload Resource
-        </Modal.Title>
-      </Modal.Header>
-      <Modal.Body style={{ padding: '24px' }}>
-        <Form onSubmit={handleSubmit}>
-          <Form.Group className="mb-3">
-            <Form.Label style={{ fontWeight: 600, color: '#1a3a50' }}>
-              Title <span style={{ color: 'red' }}>*</span>
-            </Form.Label>
-            <Form.Control
-              type="text"
-              placeholder="Enter resource title"
-              value={formData.title}
-              onChange={e => setFormData({ ...formData, title: e.target.value })}
-              style={{ borderRadius: '8px' }}
-            />
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label style={{ fontWeight: 600, color: '#1a3a50' }}>
-              Description <span style={{ color: 'red' }}>*</span>
-            </Form.Label>
-            <Form.Control
-              as="textarea"
-              rows={3}
-              placeholder="Enter resource description"
-              value={formData.description}
-              onChange={e => setFormData({ ...formData, description: e.target.value })}
-              style={{ borderRadius: '8px' }}
-            />
-          </Form.Group>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-            <Form.Group>
-              <Form.Label style={{ fontWeight: 600, color: '#1a3a50' }}>
-                Department <span style={{ color: 'red' }}>*</span>
-              </Form.Label>
-              <Form.Select
-                value={formData.department}
-                onChange={e => setFormData({ ...formData, department: e.target.value })}
-                style={{ borderRadius: '8px' }}
-              >
-                <option value="">Select Department</option>
-                {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
-              </Form.Select>
-            </Form.Group>
-
-            <Form.Group>
-              <Form.Label style={{ fontWeight: 600, color: '#1a3a50' }}>
-                Course Code <span style={{ color: 'red' }}>*</span>
-              </Form.Label>
-              <Form.Select
-                value={formData.courseCode}
-                onChange={e => setFormData({ ...formData, courseCode: e.target.value })}
-                style={{ borderRadius: '8px' }}
-              >
-                <option value="">Select Course</option>
-                {COURSE_CODES.map(c => <option key={c} value={c}>{c}</option>)}
-              </Form.Select>
-            </Form.Group>
-          </div>
-
-          <Form.Group className="mb-3">
-            <Form.Label style={{ fontWeight: 600, color: '#1a3a50' }}>
-              Resource Type <span style={{ color: 'red' }}>*</span>
-            </Form.Label>
-            <Form.Select
-              value={formData.resourceType}
-              onChange={e => setFormData({ ...formData, resourceType: e.target.value })}
-              style={{ borderRadius: '8px' }}
-            >
-              <option value="">Select Type</option>
-              {RESOURCE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-            </Form.Select>
-          </Form.Group>
-
-          <Form.Group className="mb-4">
-            <Form.Label style={{ fontWeight: 600, color: '#1a3a50' }}>
-              File <span style={{ color: 'red' }}>*</span>
-            </Form.Label>
-            <div
-              style={{
-                border: '2px dashed #b8d4e4',
-                borderRadius: '10px',
-                padding: '24px',
-                textAlign: 'center',
-                background: '#f8fbfe',
-                cursor: 'pointer',
-              }}
-              onClick={() => document.getElementById('fileInput')?.click()}
-            >
-              <input
-                id="fileInput"
-                type="file"
-                onChange={handleFileChange}
-                style={{ display: 'none' }}
-              />
-              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📁</div>
-              <p style={{ color: '#4a6a80', marginBottom: '4px' }}>
-                Click to browse or drag and drop
-              </p>
-              <p style={{ color: '#9ab5c5', fontSize: '0.8rem' }}>
-                Supports: PDF, DOC, DOCX, PPT, ZIP (Max 50MB)
-              </p>
-              {formData.file && (
-                <Alert variant="info" style={{ marginTop: '12px', fontSize: '0.9rem' }}>
-                  Selected: {formData.file.name}
-                </Alert>
-              )}
-            </div>
-          </Form.Group>
-
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-            <Button variant="outline-secondary" onClick={onHide} style={{ borderRadius: '8px' }}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" style={{ 
-              background: '#2e7da8', 
-              border: 'none', 
-              borderRadius: '8px',
-              padding: '8px 24px'
-            }}>
-              Upload Resource
-            </Button>
-          </div>
-        </Form>
-      </Modal.Body>
-    </Modal>
-  );
-}
-
 // Main Resources Page Component
 export default function ResourcesPage() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showUploadModal, setShowUploadModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('');
@@ -381,67 +195,26 @@ export default function ResourcesPage() {
   useEffect(() => {
     const loadResources = async () => {
       try {
-        // Try to fetch from API
-        const response = await fetch('/api/resources');
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/resources`);
         if (response.ok) {
           const data = await response.json();
           setResources(data);
         } else {
-          // Use mock data if API fails
           setResources(MOCK_RESOURCES);
         }
-      } catch (error) {
-        // Use mock data on error
+      } catch {
         setResources(MOCK_RESOURCES);
       } finally {
         setLoading(false);
       }
     };
-
     loadResources();
   }, []);
-
-  // Handle upload
-  const handleUpload = async (formData: UploadFormData) => {
-    const data = new FormData();
-    data.append('title', formData.title);
-    data.append('description', formData.description);
-    data.append('courseCode', formData.courseCode);
-    data.append('department', formData.department);
-    data.append('resourceType', formData.resourceType);
-    if (formData.file) data.append('file', formData.file);
-
-    try {
-      const token = localStorage.getItem('token');
-
-      const response = await fetch('/api/resources/upload', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: data,
-      });
-
-      if (response.ok) {
-        toast.success('Resource uploaded successfully!');
-        // Refresh resources
-        const updated = await fetch('/api/resources');
-        setResources(await updated.json());
-      } else {
-        // REPLACE the offline mode fallback with this:
-        const err = await response.json().catch(() => ({ message: 'Unknown error' }));
-        toast.error(`Upload failed (${response.status}): ${err.message || JSON.stringify(err)}`);
-      }
-    } 
-    catch (error) {
-      toast.error(`Network error: ${error}`);
-    }
-  };
 
   // Handle download
   const handleDownload = async (id: number) => {
     const token = localStorage.getItem('token');
-    const response = await fetch(`/api/download/${id}`, {
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/download/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -461,19 +234,16 @@ export default function ResourcesPage() {
 
   // Filter resources
   const filteredResources = resources.filter(resource => {
-    const matchesSearch = searchTerm === '' || 
+    const matchesSearch = searchTerm === '' ||
       resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       resource.courseCode.toLowerCase().includes(searchTerm.toLowerCase());
-    
     const matchesDepartment = selectedDepartment === '' || resource.department === selectedDepartment;
     const matchesCourse = selectedCourse === '' || resource.courseCode === selectedCourse;
     const matchesFileType = selectedFileType === '' || resource.fileType === selectedFileType;
-    
     return matchesSearch && matchesDepartment && matchesCourse && matchesFileType;
   });
 
-  // Clear all filters
   const clearFilters = () => {
     setSearchTerm('');
     setSelectedDepartment('');
@@ -486,40 +256,15 @@ export default function ResourcesPage() {
       <Sidebar active="Resources" />
 
       <main style={{ flex: 1, padding: '32px 40px', overflowY: 'auto' }}>
-        {/* Header */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          marginBottom: '32px' 
-        }}>
-          <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#1a3a50', margin: 0 }}>
-              Resource Library
-            </h1>
-            <p style={{ color: '#6a8fa8', marginTop: '8px' }}>
-              Browse and download academic resources shared by students and faculty
-            </p>
-          </div>
-          
-          <button
-            onClick={() => setShowUploadModal(true)}
-            style={{
-              background: '#2e7da8',
-              color: 'white',
-              border: 'none',
-              padding: '12px 24px',
-              borderRadius: '8px',
-              fontSize: '1rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <span>⬆️</span> Upload Resource
-          </button>
+
+        {/* Header — no Upload button here */}
+        <div style={{ marginBottom: '32px' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#1a3a50', margin: 0 }}>
+            Resource Library
+          </h1>
+          <p style={{ color: '#6a8fa8', marginTop: '8px', marginBottom: 0 }}>
+            Browse and download academic resources shared by students and faculty
+          </p>
         </div>
 
         {/* Search and Filters */}
@@ -531,72 +276,51 @@ export default function ResourcesPage() {
           boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
         }}>
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-            {/* Search */}
             <div style={{ flex: 1, minWidth: '250px' }}>
               <input
                 type="text"
                 placeholder="Search resources..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
                 style={{
                   width: '100%',
                   padding: '10px 16px',
                   border: '1px solid #dce8f0',
                   borderRadius: '8px',
                   fontSize: '0.95rem',
+                  outline: 'none',
+                  boxSizing: 'border-box',
                 }}
               />
             </div>
 
-            {/* Department Filter */}
             <select
               value={selectedDepartment}
-              onChange={(e) => setSelectedDepartment(e.target.value)}
-              style={{
-                padding: '10px 16px',
-                border: '1px solid #dce8f0',
-                borderRadius: '8px',
-                fontSize: '0.95rem',
-                minWidth: '150px',
-              }}
+              onChange={e => setSelectedDepartment(e.target.value)}
+              style={{ padding: '10px 16px', border: '1px solid #dce8f0', borderRadius: '8px', fontSize: '0.95rem', minWidth: '150px' }}
             >
               <option value="">All Departments</option>
               {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
 
-            {/* Course Filter */}
             <select
               value={selectedCourse}
-              onChange={(e) => setSelectedCourse(e.target.value)}
-              style={{
-                padding: '10px 16px',
-                border: '1px solid #dce8f0',
-                borderRadius: '8px',
-                fontSize: '0.95rem',
-                minWidth: '150px',
-              }}
+              onChange={e => setSelectedCourse(e.target.value)}
+              style={{ padding: '10px 16px', border: '1px solid #dce8f0', borderRadius: '8px', fontSize: '0.95rem', minWidth: '150px' }}
             >
               <option value="">All Courses</option>
               {COURSE_CODES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
 
-            {/* File Type Filter */}
             <select
               value={selectedFileType}
-              onChange={(e) => setSelectedFileType(e.target.value)}
-              style={{
-                padding: '10px 16px',
-                border: '1px solid #dce8f0',
-                borderRadius: '8px',
-                fontSize: '0.95rem',
-                minWidth: '150px',
-              }}
+              onChange={e => setSelectedFileType(e.target.value)}
+              style={{ padding: '10px 16px', border: '1px solid #dce8f0', borderRadius: '8px', fontSize: '0.95rem', minWidth: '150px' }}
             >
               <option value="">All Types</option>
               {FILE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
 
-            {/* Clear Filters */}
             {(searchTerm || selectedDepartment || selectedCourse || selectedFileType) && (
               <button
                 onClick={clearFilters}
@@ -616,7 +340,7 @@ export default function ResourcesPage() {
           </div>
         </div>
 
-        {/* Resources List */}
+        {/* Resources Table */}
         <div style={{
           background: 'white',
           borderRadius: '12px',
@@ -626,9 +350,6 @@ export default function ResourcesPage() {
           <div style={{
             padding: '16px 24px',
             borderBottom: '1px solid #dce8f0',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
           }}>
             <h3 style={{ margin: 0, color: '#1a3a50', fontSize: '1.1rem' }}>
               Available Resources ({filteredResources.length})
@@ -643,35 +364,29 @@ export default function ResourcesPage() {
             <div style={{ padding: '48px', textAlign: 'center' }}>
               <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📚</div>
               <h3 style={{ color: '#1a3a50', marginBottom: '8px' }}>No resources found</h3>
-              <p style={{ color: '#6a8fa8' }}>
-                Try adjusting your filters or upload a new resource
-              </p>
+              <p style={{ color: '#6a8fa8' }}>Try adjusting your filters or upload a new resource</p>
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: '#f8fafc', borderBottom: '1px solid #dce8f0' }}>
-                    <th style={{ padding: '12px 24px', textAlign: 'left', color: '#6a8fa8', fontSize: '0.9rem' }}>Resource</th>
-                    <th style={{ padding: '12px 24px', textAlign: 'left', color: '#6a8fa8', fontSize: '0.9rem' }}>Department</th>
-                    <th style={{ padding: '12px 24px', textAlign: 'left', color: '#6a8fa8', fontSize: '0.9rem' }}>Course</th>
-                    <th style={{ padding: '12px 24px', textAlign: 'left', color: '#6a8fa8', fontSize: '0.9rem' }}>Type</th>
-                    <th style={{ padding: '12px 24px', textAlign: 'left', color: '#6a8fa8', fontSize: '0.9rem' }}>Uploader</th>
-                    <th style={{ padding: '12px 24px', textAlign: 'left', color: '#6a8fa8', fontSize: '0.9rem' }}>Downloads</th>
-                    <th style={{ padding: '12px 24px', textAlign: 'left', color: '#6a8fa8', fontSize: '0.9rem' }}>Action</th>
+                    {['Resource', 'Department', 'Course', 'Type', 'Uploader', 'Downloads', 'Action'].map(h => (
+                      <th key={h} style={{ padding: '12px 24px', textAlign: 'left', color: '#6a8fa8', fontSize: '0.9rem', fontWeight: 600 }}>
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filteredResources.map(resource => (
                     <tr key={resource.id} style={{ borderBottom: '1px solid #dce8f0' }}>
                       <td style={{ padding: '16px 24px' }}>
-                        <div>
-                          <div style={{ fontWeight: 600, color: '#1a3a50', marginBottom: '4px' }}>
-                            {resource.title}
-                          </div>
-                          <div style={{ fontSize: '0.85rem', color: '#6a8fa8' }}>
-                            {resource.description.substring(0, 60)}...
-                          </div>
+                        <div style={{ fontWeight: 600, color: '#1a3a50', marginBottom: '4px' }}>
+                          {resource.title}
+                        </div>
+                        <div style={{ fontSize: '0.85rem', color: '#6a8fa8' }}>
+                          {resource.description.substring(0, 60)}...
                         </div>
                       </td>
                       <td style={{ padding: '16px 24px', color: '#4a6a80' }}>{resource.department}</td>
@@ -703,11 +418,11 @@ export default function ResourcesPage() {
                             fontSize: '0.9rem',
                             transition: 'all 0.2s',
                           }}
-                          onMouseEnter={(e) => {
+                          onMouseEnter={e => {
                             e.currentTarget.style.background = '#2e7da8';
                             e.currentTarget.style.color = 'white';
                           }}
-                          onMouseLeave={(e) => {
+                          onMouseLeave={e => {
                             e.currentTarget.style.background = 'transparent';
                             e.currentTarget.style.color = '#2e7da8';
                           }}
@@ -723,13 +438,6 @@ export default function ResourcesPage() {
           )}
         </div>
       </main>
-
-      {/* Upload Modal */}
-      <UploadModal
-        show={showUploadModal}
-        onHide={() => setShowUploadModal(false)}
-        onUpload={handleUpload}
-      />
     </div>
   );
 }
