@@ -234,7 +234,7 @@ export default function HomePage() {
             <Link to="/resources" className="nav-auth-btn" style={{
                  marginLeft: '8px', background: 'transparent',
                   border: '1.5px solid #a8c4d4', color: '#4a6a80',
-             }}>
+            }}>
               📄 Resources
              </Link>
 
