@@ -1,28 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Container, Row, Col, Button, Form, InputGroup, Nav, Navbar, NavDropdown } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 
 interface Resource {
   id: number;
   title: string;
-  subject: string;
+  description: string;
+  department: string;
+  courseCode: string;
   fileType: string;
-  category: string;
+  fileSize: string;
   uploadedBy: string;
   uploadedAt: string;
   downloads: number;
 }
 
-const RESOURCES: Resource[] = [
-  { id: 1, title: 'Introduction to Data Structures', subject: 'Computer Science', fileType: 'PDF', category: 'Lecture Notes', uploadedBy: 'Tahmid', uploadedAt: '2026-02-20', downloads: 142 },
-  { id: 2, title: 'Algorithm & Complexity notes', subject: 'Computer Science', fileType: 'PDF', category: 'Lecture Notes', uploadedBy: 'Mubashira', uploadedAt: '2026-02-18', downloads: 98 },
-  { id: 3, title: 'Database notes', subject: 'Computer Science', fileType: 'PDF', category: 'Lecture Notes', uploadedBy: 'Rafi', uploadedAt: '2026-02-15', downloads: 211 },
-  { id: 4, title: 'Introduction to Data Structures', subject: 'Computer Science', fileType: 'PDF', category: 'Past Papers', uploadedBy: 'Nadia', uploadedAt: '2026-02-10', downloads: 87 },
-  { id: 5, title: 'Introduction to Data Structures', subject: 'Computer Science', fileType: 'PDF', category: 'Past Papers', uploadedBy: 'Arif', uploadedAt: '2026-02-08', downloads: 63 },
-  { id: 6, title: 'Introduction to Data Structures', subject: 'Computer Science', fileType: 'PDF', category: 'Books', uploadedBy: 'Sumaiya', uploadedAt: '2026-01-30', downloads: 311 },
-];
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+}
 
-const CATEGORIES = ['All', 'Lecture Notes', 'Past Papers', 'Assignments', 'Books', 'Lab Reports'];
+const RESOURCE_TYPES = ['All', 'Lecture Notes', 'Past Papers', 'Assignments', 'Books', 'Lab Reports'];
 
 function ResourceCard({ resource }: { resource: Resource }) {
   const [hovered, setHovered] = useState(false);
@@ -43,6 +43,7 @@ function ResourceCard({ resource }: { resource: Resource }) {
         flexDirection: 'column',
       }}
     >
+      {/* File icon + title */}
       <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
         <div style={{
           width: '36px', height: '44px', flexShrink: 0,
@@ -60,39 +61,134 @@ function ResourceCard({ resource }: { resource: Resource }) {
             {resource.title}
           </h6>
           <p style={{ color: '#7a9db5', fontSize: '0.74rem', margin: 0, fontWeight: 500 }}>
-            {resource.subject}
+            {resource.department} • {resource.courseCode}
+          </p>
+          <p style={{ color: '#a0bece', fontSize: '0.7rem', margin: '3px 0 0' }}>
+            By {resource.uploadedBy}
           </p>
         </div>
       </div>
+
+      {/* Description */}
+      <p style={{ color: '#7a9db5', fontSize: '0.75rem', margin: '0 0 0.75rem', lineHeight: 1.5,
+        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden'
+      }}>
+        {resource.description}
+      </p>
+
       <div style={{ flex: 1 }} />
-      <div style={{ marginTop: '0.5rem' }}>
-        <span style={{
-          display: 'inline-block', background: '#edf5fa', color: '#3a7a9e',
-          border: '1px solid #b8d4e4', borderRadius: '5px', padding: '2px 9px',
-          fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.05em',
-        }}>
-          {resource.fileType}
+
+      {/* Footer */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          <span style={{
+            background: '#edf5fa', color: '#3a7a9e',
+            border: '1px solid #b8d4e4', borderRadius: '5px', padding: '2px 8px',
+            fontSize: '0.68rem', fontWeight: 700,
+          }}>
+            {resource.fileType}
+          </span>
+          {resource.fileSize && (
+            <span style={{
+              background: '#f0f6fa', color: '#7a9db5',
+              border: '1px solid #dce8f0', borderRadius: '5px', padding: '2px 8px',
+              fontSize: '0.68rem', fontWeight: 600,
+            }}>
+              {resource.fileSize}
+            </span>
+          )}
+        </div>
+        <span style={{ color: '#a0bece', fontSize: '0.7rem' }}>
+          ⬇️ {resource.downloads}
         </span>
       </div>
     </div>
   );
 }
 
+function ResourceSkeleton() {
+  return (
+    <div style={{ background: '#fff', border: '1px solid #dce8f0', borderRadius: '10px', padding: '1rem', height: '160px' }}>
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '10px' }}>
+        <div className="skeleton" style={{ width: '36px', height: '44px', borderRadius: '6px', flexShrink: 0 }} />
+        <div style={{ flex: 1 }}>
+          <div className="skeleton" style={{ height: '12px', borderRadius: '4px', marginBottom: '8px' }} />
+          <div className="skeleton" style={{ height: '10px', borderRadius: '4px', width: '60%' }} />
+        </div>
+      </div>
+      <div className="skeleton" style={{ height: '10px', borderRadius: '4px', marginBottom: '6px' }} />
+      <div className="skeleton" style={{ height: '10px', borderRadius: '4px', width: '80%' }} />
+    </div>
+  );
+}
+
 export default function HomePage() {
-  const navigate = useNavigate();
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeType, setActiveType] = useState('All');
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [user, setUser] = useState<User | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const navigate = useNavigate();
 
-  const filtered = RESOURCES.filter(r => {
-    const matchSearch = r.title.toLowerCase().includes(search.toLowerCase()) ||
-      r.subject.toLowerCase().includes(search.toLowerCase());
-    const matchCategory = activeCategory === 'All' || r.category === activeCategory;
-    return matchSearch && matchCategory;
-  });
+  // Check if user is logged in from localStorage
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
-  const handleViewAllResources = () => {
-    navigate('/resources');
+  // Logout handler
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'include',
+      });
+    } catch {
+      console.error('Logout error');
+    } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setUser(null);
+      setLoggingOut(false);
+      navigate('/');
+    }
   };
+
+  // Fetch resources from API with debounce
+  useEffect(() => {
+    const fetchResources = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const params = new URLSearchParams();
+        if (activeType !== 'All') params.append('resourceType', activeType);
+        if (search) params.append('search', search);
+
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_ENDPOINT}/api/resources?${params.toString()}`
+        );
+        const data = await res.json();
+        setResources(Array.isArray(data) ? data : []);
+      } catch {
+        setError('Could not connect to server.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const timer = setTimeout(fetchResources, 400);
+    return () => clearTimeout(timer);
+  }, [activeType, search]);
 
   return (
     <div style={{ minHeight: '100vh', background: '#f2f7fb', fontFamily: "'Nunito', sans-serif" }}>
@@ -102,17 +198,19 @@ export default function HomePage() {
         * { box-sizing: border-box; }
         body { background: #f2f7fb !important; margin: 0; }
         .cc-dropdown-toggle { color: #4a6a80 !important; font-size: 0.84rem !important; font-weight: 600 !important; }
-        .dropdown-menu { border: 1px solid #dce8f0 !important; border-radius: 8px !important; box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important; min-width: 160px !important; }
+        .dropdown-menu { border: 1px solid #dce8f0 !important; border-radius: 8px !important; box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important; }
         .dropdown-item { font-size: 0.82rem !important; color: #4a6a80 !important; padding: 7px 16px !important; }
         .dropdown-item:hover { background: #f0f6fa !important; color: #1a3a50 !important; }
         .search-ctrl::placeholder { color: #9ab8ca !important; }
         .search-ctrl:focus { box-shadow: none !important; border-color: #7ab0cc !important; }
-        .cat-pill { cursor: pointer; transition: all 0.2s; border: 1.5px solid #c8dce8; border-radius: 20px; padding: 5px 15px; font-size: 0.78rem; font-weight: 600; font-family: 'Nunito', sans-serif; }
+        .cat-pill { cursor: pointer; transition: all 0.2s; border: 1.5px solid #c8dce8; border-radius: 20px; padding: 5px 15px; font-size: 0.78rem; font-weight: 600; font-family: 'Nunito', sans-serif; background: none; }
         .cat-pill.active { background: linear-gradient(135deg,#2e7da8,#4a9eca) !important; color: #fff !important; border-color: transparent !important; box-shadow: 0 3px 10px rgba(46,125,168,0.22); }
         .cat-pill:not(.active) { background: #fff; color: #4a6a80; }
         .cat-pill:not(.active):hover { background: #edf5fa !important; color: #1a3a50 !important; }
-        .nav-auth-btn { display: inline-block; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.82rem; border-radius: 7px; padding: 5px 18px; text-decoration: none; transition: all 0.2s; }
+        .nav-auth-btn { display: inline-block; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.82rem; border-radius: 7px; padding: 5px 18px; text-decoration: none; transition: all 0.2s; border: none; cursor: pointer; }
         .nav-auth-btn:hover { opacity: 0.88; }
+        @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+        .skeleton { background: linear-gradient(90deg,#f0f6fa 25%,#e0eef6 50%,#f0f6fa 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
       `}</style>
 
       {/* ── Navbar ── */}
@@ -123,7 +221,6 @@ export default function HomePage() {
       }}>
         <Container>
           <Navbar.Toggle style={{ border: '1px solid #dce8f0', padding: '4px 8px' }} />
-
           <Navbar.Brand as={Link} to="/" style={{
             fontFamily: "'Lora', serif", fontWeight: 700,
             color: '#1a3a50', fontSize: '1.35rem', marginLeft: '6px',
@@ -134,73 +231,69 @@ export default function HomePage() {
           <Navbar.Collapse>
             <Nav className="ms-auto align-items-center gap-1">
 
-              {/* Resources dropdown - NOW LINKS TO RESOURCES PAGE */}
-              <NavDropdown title="Resources" id="res-dd" className="cc-dropdown-toggle">
-                {['Lecture Notes', 'Past Papers', 'Assignments', 'Books', 'Lab Reports'].map(c => (
-                  <NavDropdown.Item 
-                    key={c} 
-                    onClick={() => {
-                      setActiveCategory(c);
-                      navigate('/resources');
-                    }}
-                  >
-                    {c}
-                  </NavDropdown.Item>
-                ))}
-                <NavDropdown.Divider />
-                <NavDropdown.Item onClick={() => {
-                  setActiveCategory('All');
-                  navigate('/resources');
-                }}>
-                  All Resources
-                </NavDropdown.Item>
-              </NavDropdown>
+            <Link to="/resources" className="nav-auth-btn" style={{
+                 marginLeft: '8px', background: 'transparent',
+                  border: '1.5px solid #a8c4d4', color: '#4a6a80',
+             }}>
+              📄 Resources
+             </Link>
 
-              {/* Admin dropdown - NOW LINKS TO ADMIN PROFILE */}
+              {/* Admin dropdown */}
               <NavDropdown title="Admin" id="admin-dd" className="cc-dropdown-toggle">
                 <NavDropdown.Item as={Link} to="/login">Admin Login</NavDropdown.Item>
-                <NavDropdown.Item as={Link} to="/admin">Admin Dashboard</NavDropdown.Item>
+                <NavDropdown.Item as={Link} to="/admin">Dashboard</NavDropdown.Item>
               </NavDropdown>
 
-              {/* Student Profile - NOW LINKS TO STUDENT PROFILE */}
-              <Link to="/profile" className="nav-auth-btn" style={{
-                marginLeft: '8px', background: 'transparent',
-                border: '1.5px solid #a8c4d4', color: '#4a6a80',
-              }}>
-                👤 Student Profile
-              </Link>
-
-              {/* Login */}
-              <Link to="/login" className="nav-auth-btn" style={{
-                marginLeft: '4px', background: 'transparent',
-                border: '1.5px solid #a8c4d4', color: '#4a6a80',
-              }}>
-                Login
-              </Link>
-
-              {/* Register */}
-              <Link to="/register" className="nav-auth-btn" style={{
-                marginLeft: '4px',
-                background: 'linear-gradient(135deg, #2e7da8, #4a9eca)',
-                border: 'none', color: '#fff',
-              }}>
-                Register
-              </Link>
+              {user ? (
+                // ── Logged in ──
+                <>
+                  <Link to="/profile" className="nav-auth-btn" style={{
+                    marginLeft: '8px', background: '#edf5fa',
+                    border: '1.5px solid #a8c4d4', color: '#2e7da8',
+                  }}>
+                    👤 {user.name}
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    disabled={loggingOut}
+                    className="nav-auth-btn"
+                    style={{
+                      marginLeft: '4px', background: '#fee2e2',
+                      border: '1.5px solid #fca5a5', color: '#dc2626',
+                    }}
+                  >
+                    {loggingOut ? 'Logging out...' : 'Logout'}
+                  </button>
+                </>
+              ) : (
+                // ── Not logged in ──
+                <>
+                  <Link to="/login" className="nav-auth-btn" style={{
+                    marginLeft: '8px', background: 'transparent',
+                    border: '1.5px solid #a8c4d4', color: '#4a6a80',
+                  }}>
+                    Login
+                  </Link>
+                  <Link to="/register" className="nav-auth-btn" style={{
+                    marginLeft: '4px',
+                    background: 'linear-gradient(135deg, #2e7da8, #4a9eca)',
+                    border: 'none', color: '#fff',
+                  }}>
+                    Register
+                  </Link>
+                </>
+              )}
 
             </Nav>
           </Navbar.Collapse>
         </Container>
       </Navbar>
 
-      {/* ── Hero Banner ── */}
+      {/* ── Hero ── */}
       <div style={{
         background: 'linear-gradient(135deg, #cfe5f2 0%, #dff0f8 40%, #c8dff0 100%)',
         borderBottom: '1px solid #b8d4e4', padding: '2.8rem 0',
-        position: 'relative', overflow: 'hidden',
       }}>
-        <div style={{ position: 'absolute', top: '-50px', left: '-50px', width: '220px', height: '220px', borderRadius: '50%', background: 'rgba(100,160,200,0.07)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: '-60px', right: '8%', width: '260px', height: '260px', borderRadius: '50%', background: 'rgba(80,140,180,0.06)', pointerEvents: 'none' }} />
-
         <Container>
           <Row className="align-items-center">
             <Col md={5}>
@@ -211,7 +304,6 @@ export default function HomePage() {
               }}>
                 Find and share the best study materials.
               </h1>
-
               <InputGroup style={{ borderRadius: '8px', overflow: 'hidden', boxShadow: '0 3px 14px rgba(0,0,0,0.1)' }}>
                 <InputGroup.Text style={{ background: '#fff', border: '1.5px solid #a8c4d4', borderRight: 'none', color: '#8ab4cc', paddingLeft: '13px' }}>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -220,7 +312,7 @@ export default function HomePage() {
                 </InputGroup.Text>
                 <Form.Control
                   className="search-ctrl"
-                  placeholder="Search for study materials"
+                  placeholder="Search by title, department, course..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   style={{
@@ -229,14 +321,11 @@ export default function HomePage() {
                     background: '#fff', fontFamily: "'Nunito', sans-serif",
                   }}
                 />
-                <Button 
-                  onClick={() => navigate('/resources')}
-                  style={{
-                    background: 'linear-gradient(135deg, #2e7da8, #4a9eca)', border: 'none',
-                    color: '#fff', fontFamily: "'Nunito', sans-serif", fontWeight: 700,
-                    fontSize: '0.87rem', padding: '10px 22px',
-                  }}
-                >
+                <Button style={{
+                  background: 'linear-gradient(135deg, #2e7da8, #4a9eca)', border: 'none',
+                  color: '#fff', fontFamily: "'Nunito', sans-serif", fontWeight: 700,
+                  fontSize: '0.87rem', padding: '10px 22px',
+                }}>
                   Find
                 </Button>
               </InputGroup>
@@ -258,17 +347,12 @@ export default function HomePage() {
                       <span key={i} style={{ fontSize: `${1.9 - i * 0.1}rem`, transform: `rotate(${(i - 2) * 4}deg)` }}>{b}</span>
                     ))}
                   </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    {['📄', '📋', '🗒️'].map((n, i) => (
-                      <span key={i} style={{ fontSize: '1.25rem' }}>{n}</span>
-                    ))}
-                  </div>
                 </div>
-                <div style={{ position: 'absolute', top: '12px', right: '14px', background: '#fff', borderRadius: '7px', padding: '4px 10px', fontSize: '0.67rem', fontWeight: 700, color: '#2e7da8', border: '1px solid #a8c4d4', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', fontFamily: "'Nunito', sans-serif" }}>
-                  📚 800+ Resources
+                <div style={{ position: 'absolute', top: '12px', right: '14px', background: '#fff', borderRadius: '7px', padding: '4px 10px', fontSize: '0.67rem', fontWeight: 700, color: '#2e7da8', border: '1px solid #a8c4d4', fontFamily: "'Nunito', sans-serif" }}>
+                  📚 {resources.length}+ Resources
                 </div>
-                <div style={{ position: 'absolute', bottom: '12px', left: '14px', background: '#fff', borderRadius: '7px', padding: '4px 10px', fontSize: '0.67rem', fontWeight: 700, color: '#3a8a5e', border: '1px solid #b8d8c8', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', fontFamily: "'Nunito', sans-serif" }}>
-                  ✅ Approved Only
+                <div style={{ position: 'absolute', bottom: '12px', left: '14px', background: '#fff', borderRadius: '7px', padding: '4px 10px', fontSize: '0.67rem', fontWeight: 700, color: '#3a8a5e', border: '1px solid #b8d8c8', fontFamily: "'Nunito', sans-serif" }}>
+                  ✅ Free to Download
                 </div>
               </div>
             </Col>
@@ -280,27 +364,22 @@ export default function HomePage() {
       <Container style={{ padding: '2.5rem 1rem 3.5rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <h2 style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: '1.45rem', color: '#1a3a50', marginBottom: '0.35rem' }}>
-            Browse new study materials
+            Browse study materials
           </h2>
           <p style={{ color: '#7a9db5', fontSize: '0.83rem', margin: 0 }}>
             Explore our collection to discover the perfect study notes for you
           </p>
         </div>
 
-        {/* Category pills - NOW LINK TO RESOURCES PAGE WITH FILTER */}
+        {/* Resource type filter pills */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '2rem', flexWrap: 'wrap' }}>
-          {CATEGORIES.map(cat => (
-            <button 
-              key={cat} 
-              className={`cat-pill ${activeCategory === cat ? 'active' : ''}`} 
-              onClick={() => {
-                setActiveCategory(cat);
-                if (cat !== 'All') {
-                  navigate('/resources');
-                }
-              }}
+          {RESOURCE_TYPES.map(type => (
+            <button
+              key={type}
+              className={`cat-pill ${activeType === type ? 'active' : ''}`}
+              onClick={() => setActiveType(type)}
             >
-              {cat}
+              {type}
             </button>
           ))}
         </div>
@@ -308,49 +387,70 @@ export default function HomePage() {
         {/* Results info */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <p style={{ color: '#7a9db5', fontSize: '0.78rem', margin: 0 }}>
-            Showing <strong style={{ color: '#2e7da8' }}>{filtered.length}</strong> result{filtered.length !== 1 ? 's' : ''}
+            {loading ? 'Loading...' : (
+              <>Showing <strong style={{ color: '#2e7da8' }}>{resources.length}</strong> result{resources.length !== 1 ? 's' : ''}</>
+            )}
           </p>
-          {(search || activeCategory !== 'All') && (
-            <button onClick={() => { setSearch(''); setActiveCategory('All'); }}
-              style={{ background: 'none', border: 'none', color: '#2e7da8', fontSize: '0.76rem', cursor: 'pointer', textDecoration: 'underline', fontFamily: "'Nunito', sans-serif" }}>
+          {(search || activeType !== 'All') && (
+            <button
+              onClick={() => { setSearch(''); setActiveType('All'); }}
+              style={{ background: 'none', border: 'none', color: '#2e7da8', fontSize: '0.76rem', cursor: 'pointer', textDecoration: 'underline', fontFamily: "'Nunito', sans-serif" }}
+            >
               Clear filters
             </button>
           )}
         </div>
 
-        {/* Resource grid - NOW CLICKABLE TO RESOURCES PAGE */}
-        {filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '3rem', color: '#7a9db5' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔍</div>
-            <p style={{ fontSize: '0.9rem' }}>No resources found.</p>
+        {/* Error state */}
+        {error && (
+          <div style={{ textAlign: 'center', padding: '2rem', color: '#e07a7a', fontSize: '0.85rem' }}>
+            ⚠️ {error}
           </div>
-        ) : (
+        )}
+
+        {/* Loading skeletons */}
+        {loading && (
           <Row className="g-3">
-            {filtered.map(r => (
-              <Col key={r.id} xs={12} sm={6} md={4}>
-                <div onClick={() => navigate('/resources')} style={{ cursor: 'pointer' }}>
-                  <ResourceCard resource={r} />
-                </div>
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <Col key={i} xs={12} sm={6} md={4}>
+                <ResourceSkeleton />
               </Col>
             ))}
           </Row>
         )}
 
-        {/* View all - NOW WORKING LINK */}
-        <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
-          <Button 
-            onClick={handleViewAllResources}
-            style={{
+        {/* Empty state */}
+        {!loading && !error && resources.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '3rem', color: '#7a9db5' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔍</div>
+            <p style={{ fontSize: '0.9rem' }}>No resources found. Try a different search or filter.</p>
+          </div>
+        )}
+
+        {/* Resource grid */}
+        {!loading && !error && resources.length > 0 && (
+          <Row className="g-3">
+            {resources.map(r => (
+              <Col key={r.id} xs={12} sm={6} md={4}>
+                <ResourceCard resource={r} />
+              </Col>
+            ))}
+          </Row>
+        )}
+
+        {/* View all button */}
+        {!loading && resources.length > 0 && (
+          <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
+            <Button style={{
               background: 'linear-gradient(135deg, #2e7da8, #4a9eca)', border: 'none',
               fontFamily: "'Nunito', sans-serif", fontWeight: 700, fontSize: '0.85rem',
               borderRadius: '8px', padding: '10px 30px', color: '#fff',
               boxShadow: '0 4px 14px rgba(46,125,168,0.28)',
-              cursor: 'pointer'
-            }}
-          >
-            View All Resources →
-          </Button>
-        </div>
+            }}>
+              View All Resources →
+            </Button>
+          </div>
+        )}
       </Container>
 
       {/* ── Footer ── */}
