@@ -9,25 +9,41 @@ use Illuminate\Support\Facades\Storage;
 class ResourceController extends Controller
 {
     // GET /api/resources
-    public function index()
-    {
-        $resources = Resource::with('user')->latest()->get();
+    public function index(Request $request)
+{
+    $query = Resource::with('user')->latest();
 
-        return response()->json($resources->map(function ($r) {
-            return [
-                'id' => $r->id,
-                'title' => $r->title,
-                'description' => $r->description,
-                'department' => $r->department,
-                'courseCode' => $r->courseCode,
-                'fileType' => $r->file_type,
-                'fileSize' => $r->file_size,
-                'uploadedBy' => $r->user->name,
-                'uploadedAt' => $r->created_at->toDateString(),
-                'downloads' => $r->downloads,
-            ];
-        }));
+    // Filter by resourceType
+    if ($request->resourceType) {
+        $query->where('resourceType', $request->resourceType);
     }
+
+    // Search by title, department, courseCode
+    if ($request->search) {
+        $query->where(function($q) use ($request) {
+            $q->where('title', 'like', '%'.$request->search.'%')
+              ->orWhere('department', 'like', '%'.$request->search.'%')
+              ->orWhere('courseCode', 'like', '%'.$request->search.'%');
+        });
+    }
+
+    $resources = $query->get();
+
+    return response()->json($resources->map(function ($r) {
+        return [
+            'id'         => $r->id,
+            'title'      => $r->title,
+            'description'=> $r->description,
+            'department' => $r->department,
+            'courseCode' => $r->courseCode,
+            'fileType'   => $r->file_type,
+            'fileSize'   => $r->file_size,
+            'uploadedBy' => $r->user->name,
+            'uploadedAt' => $r->created_at->toDateString(),
+            'downloads'  => $r->downloads,
+        ];
+    }));
+}
 
     // POST /api/upload (AUTH REQUIRED)
     public function store(Request $request)

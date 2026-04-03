@@ -6,6 +6,7 @@ import ResourcesPage from './views/ResourcesPage';
 import { LoginPage, RegisterPage } from './views/Auth';
 import RewardsPage from './views/Rewardspage';
 import UploadPage from './views/Uploadpage';
+import ProtectedRoute from './helpers/ProtectedRoute';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 import { Toaster } from 'react-hot-toast';
@@ -14,14 +15,38 @@ function App() {
   return (
     <>
       <Routes>
+        {/* Public routes */}
         <Route path="/" element={<HomePage />} />
-        <Route path="/profile" element={<StudentProfile />} />
-        <Route path="/admin" element={<AdminPage />} />
-        <Route path="/resources" element={<ResourcesPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/rewards" element={<RewardsPage />} />
-        <Route path="/upload" element={<UploadPage />} />
+
+        {/* Protected routes - login required */}
+        <Route path="/resources" element={
+          <ProtectedRoute>
+            <ResourcesPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/upload" element={
+          <ProtectedRoute>
+            <UploadPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/rewards" element={
+          <ProtectedRoute>
+            <RewardsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <StudentProfile />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin" element={
+          <ProtectedRoute>
+            <AdminPage />
+          </ProtectedRoute>
+        } />
+
         {/* catch-all */}
         <Route path="*" element={<HomePage />} />
       </Routes>
