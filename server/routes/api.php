@@ -20,7 +20,11 @@ use App\Http\Controllers\AdminController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
+
 Route::get('/resources', [ResourceController::class, 'index']);
+Route::get('/departments', [ResourceController::class, 'getDepartments']);
+Route::get('/courses/{department_id}', [ResourceController::class, 'getCourses']);
+
 Route::post('/admin/login', [AdminController::class, 'login']);
 
 

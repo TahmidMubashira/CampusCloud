@@ -11,7 +11,7 @@ CREATE TABLE resources (
     file_type NVARCHAR(50),
     file_size NVARCHAR(50),
 
-    user_id BIGINT NOT NULL,
+    user_id INT NOT NULL,
     downloads INT DEFAULT 0,
 
     created_at DATETIME2 NULL,
