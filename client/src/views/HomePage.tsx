@@ -240,7 +240,7 @@ export default function HomePage() {
 
               {/* Admin dropdown */}
               <NavDropdown title="Admin" id="admin-dd" className="cc-dropdown-toggle">
-                <NavDropdown.Item as={Link} to="/login">Admin Login</NavDropdown.Item>
+                <NavDropdown.Item as={Link} to="/admin/login">Admin Login</NavDropdown.Item>
                 <NavDropdown.Item as={Link} to="/admin">Dashboard</NavDropdown.Item>
               </NavDropdown>
 

@@ -3,13 +3,14 @@ import HomePage from './views/HomePage';
 import StudentProfile from './views/StudentProfile';
 import AdminPage from './views/AdminPage';
 import ResourcesPage from './views/ResourcesPage';
-import { LoginPage, RegisterPage } from './views/Auth';
+import { LoginPage, RegisterPage, AdminLoginPage } from './views/Auth';
 import RewardsPage from './views/Rewardspage';
 import UploadPage from './views/Uploadpage';
 import ProtectedRoute from './helpers/ProtectedRoute';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 import { Toaster } from 'react-hot-toast';
+
 
 function App() {
   return (
@@ -26,6 +27,14 @@ function App() {
             <ResourcesPage />
           </ProtectedRoute>
         } />
+
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route path="/admin" element={
+         <ProtectedRoute>
+           <AdminPage />
+         </ProtectedRoute>
+        } />
+
         <Route path="/upload" element={
           <ProtectedRoute>
             <UploadPage />

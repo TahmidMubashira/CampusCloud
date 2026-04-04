@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\RewardController;
+use App\Http\Controllers\AdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,7 +21,17 @@ use App\Http\Controllers\RewardController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
 Route::get('/resources', [ResourceController::class, 'index']);
+Route::post('/admin/login', [AdminController::class, 'login']);
 
+
+// Admin protected routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/admin/logout',          [AdminController::class, 'logout']);
+    Route::get('/admin/pending',          [AdminController::class, 'pending']);
+    Route::get('/admin/stats',            [AdminController::class, 'stats']);
+    Route::put('/admin/approve/{id}',     [AdminController::class, 'approve']);
+    Route::put('/admin/reject/{id}',      [AdminController::class, 'reject']);
+});
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
