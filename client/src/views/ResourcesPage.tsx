@@ -125,10 +125,9 @@ export default function ResourcesPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const API = import.meta.env.VITE_BACKEND_ENDPOINT;
         const [res1, res2] = await Promise.all([
-          fetch(`${API}/api/resources`),
-          fetch(`${API}/api/departments`),
+          fetch('/api/resources'),
+          fetch('/api/departments'),
         ]);
         const resourcesData = await res1.json();
         const departmentsData = await res2.json();
@@ -150,7 +149,7 @@ export default function ResourcesPage() {
   // ── Fetch courses when department filter changes ───────────────────────────
   useEffect(() => {
     if (selectedDepartment) {
-      fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/courses/${selectedDepartment}`)
+      fetch(`/api/courses/${selectedDepartment}`)
         .then(r => r.json())
         .then(data => setCourses(Array.isArray(data) ? data : []))  // ← fixed
         .catch(() => toast.error('Failed to load courses'));
