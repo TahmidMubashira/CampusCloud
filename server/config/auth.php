@@ -95,6 +95,12 @@ return [
         ],
     ],
 
+
+    'admins' => [
+    'driver' => 'eloquent',
+    'model'  => App\Models\Admin::class,
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Password Confirmation Timeout

@@ -12,6 +12,11 @@ class Admin extends Authenticatable
     protected $table = 'admins';
     protected $primaryKey = 'admin_id';
 
+    public function tokens()
+{
+    return $this->morphMany(\Laravel\Sanctum\PersonalAccessToken::class, 'tokenable');
+}
+
     protected $fillable = [
         'name',
         'email',

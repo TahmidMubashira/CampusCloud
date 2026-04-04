@@ -9,17 +9,19 @@ class Resource extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title',
-        'description',
-        'department_id',
-        'course_id',
-        'resourceType',
-        'file_path',
-        'file_type',
-        'file_size',
-        'downloads',
-        'user_id'
-    ];
+    'title',
+    'description',
+    'department_id',
+    'course_id',
+    'resourceType',
+    'file_path',
+    'file_type',
+    'file_size',
+    'downloads',
+    'user_id',
+    'is_approved',
+    'status',
+];
 
     public function user()
     {

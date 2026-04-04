@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-// Types
 interface Resource {
   id: number;
   title: string;
   description: string;
-  department: string;   
-  courseCode: string;   
-  courseName: string;   
+  department: string;
+  courseCode: string;
+  courseName: string;
   department_id: number;
   course_id: number;
   fileType: string;
@@ -41,7 +40,6 @@ const NAV_ITEMS = [
 
 const FILE_TYPES = ['PDF', 'DOCX', 'XLSX', 'PPTX', 'ZIP', 'MP4', 'JPG'];
 
-// Sidebar Component
 function Sidebar({ active }: { active: string }) {
   return (
     <aside style={{
@@ -112,45 +110,53 @@ function Sidebar({ active }: { active: string }) {
   );
 }
 
-// Main Resources Page Component
 export default function ResourcesPage() {
-  // All resources fetched once — never re-fetched on filter change (CSR)
   const [allResources, setAllResources] = useState<Resource[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);   // courses for selected dept
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Filter state
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('');
   const [selectedFileType, setSelectedFileType] = useState('');
 
-  // ── Fetch all resources + all departments once on mount ──────────────────
+  // ── Fetch all resources + departments once on mount ────────────────────────
   useEffect(() => {
-    Promise.all([
-      fetch('/api/resources').then(r => r.json()),
-      fetch('/api/departments').then(r => r.json()),
-    ])
-      .then(([resourceData, departmentData]) => {
-        setAllResources(resourceData);
-        setDepartments(departmentData);
-      })
-      .catch(() => toast.error('Failed to load data'))
-      .finally(() => setLoading(false));
+    const fetchData = async () => {
+      try {
+        const API = import.meta.env.VITE_BACKEND_ENDPOINT;
+        const [res1, res2] = await Promise.all([
+          fetch(`${API}/api/resources`),
+          fetch(`${API}/api/departments`),
+        ]);
+        const resourcesData = await res1.json();
+        const departmentsData = await res2.json();
+
+        setAllResources(Array.isArray(resourcesData) ? resourcesData : []);
+        setDepartments(Array.isArray(departmentsData) ? departmentsData : []);
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to load data');
+        setAllResources([]);
+        setDepartments([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, []);
 
-  // ── When department filter changes, fetch that dept's courses (CSR cache) ─
+  // ── Fetch courses when department filter changes ───────────────────────────
   useEffect(() => {
     if (selectedDepartment) {
-      fetch(`/api/courses/${selectedDepartment}`)
+      fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/courses/${selectedDepartment}`)
         .then(r => r.json())
-        .then(setCourses)
+        .then(data => setCourses(Array.isArray(data) ? data : []))  // ← fixed
         .catch(() => toast.error('Failed to load courses'));
     } else {
       setCourses([]);
     }
-    // Reset course selection when department changes
     setSelectedCourse('');
   }, [selectedDepartment]);
 
@@ -162,7 +168,6 @@ export default function ResourcesPage() {
       resource.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
       resource.courseCode.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // JOIN on department_id (from backend JOIN result stored in resource)
     const matchesDepartment =
       selectedDepartment === '' ||
       String(resource.department_id) === String(selectedDepartment);
@@ -187,18 +192,15 @@ export default function ResourcesPage() {
 
   const hasActiveFilters = searchTerm || selectedDepartment || selectedCourse || selectedFileType;
 
-  // ── Download handler ──
   const handleDownload = async (id: number) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`/api/download/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-
     if (!response.ok) {
       toast.error('Download failed. Please try again.');
       return;
     }
-
     const blob = await response.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -253,7 +255,7 @@ export default function ResourcesPage() {
               />
             </div>
 
-            {/* Department filter — loaded from API */}
+            {/* Department filter */}
             <select
               value={selectedDepartment}
               onChange={e => setSelectedDepartment(e.target.value)}
@@ -273,7 +275,7 @@ export default function ResourcesPage() {
               ))}
             </select>
 
-            {/* Course filter — only shows courses for selected department */}
+            {/* Course filter */}
             <select
               value={selectedCourse}
               onChange={e => setSelectedCourse(e.target.value)}
