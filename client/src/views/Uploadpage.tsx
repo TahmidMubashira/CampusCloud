@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -10,24 +10,21 @@ const NAV_ITEMS = [
   { label: 'Profile', to: '/profile', icon: '👤' },
 ];
 
-const DEPARTMENTS = [
-  'Computer Science', 'Mathematics', 'Physics', 'Chemistry',
-  'Biology', 'English', 'History', 'Economics', 'EEE', 'IPE',
-];
-
-const COURSE_CODES = [
-  'CSE101', 'CSE201', 'CSE301', 'CSE307',
-  'MATH101', 'MATH201',
-  'PHY101', 'PHY201',
-  'CHM101', 'CHM201',
-  'BIO101', 'BIO201',
-  'EEE301', 'IPE400',
-];
-
 const RESOURCE_TYPES = [
   'Lecture Notes', 'Past Papers', 'Assignments',
   'Books', 'Lab Reports', 'Projects', 'Tutorials',
 ];
+
+interface Department {
+  department_id: number;
+  department_name: string;
+}
+
+interface Course {
+  course_id: number;
+  course_name: string;
+  course_code: string;
+}
 
 function Sidebar({ active }: { active: string }) {
   return (
@@ -137,6 +134,13 @@ const selectStyle: React.CSSProperties = {
   cursor: 'pointer',
 };
 
+const disabledSelectStyle: React.CSSProperties = {
+  ...selectStyle,
+  background: '#f4f8fb',
+  color: '#b0c4d4',
+  cursor: 'not-allowed',
+};
+
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '9px 12px',
@@ -163,14 +167,41 @@ export default function UploadPage() {
   const navigate = useNavigate();
   const [dragOver, setDragOver] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Dynamic data from API
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    courseCode: '',
-    department: '',
+    department_id: '',
+    course_id: '',
     resourceType: '',
     file: null as File | null,
   });
+
+  // Load departments on mount
+  useEffect(() => {
+    fetch('/api/departments')
+      .then(r => r.json())
+      .then(setDepartments)
+      .catch(() => toast.error('Failed to load departments'));
+  }, []);
+
+  // Load courses when department changes
+  useEffect(() => {
+    if (formData.department_id) {
+      fetch(`/api/courses/${formData.department_id}`)
+        .then(r => r.json())
+        .then(setCourses)
+        .catch(() => toast.error('Failed to load courses'));
+    } else {
+      setCourses([]);
+    }
+    // Reset course selection when department changes
+    setFormData(p => ({ ...p, course_id: '' }));
+  }, [formData.department_id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
@@ -188,8 +219,8 @@ export default function UploadPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { title, description, courseCode, department, resourceType, file } = formData;
-    if (!title || !description || !courseCode || !department || !resourceType || !file) {
+    const { title, description, department_id, course_id, resourceType, file } = formData;
+    if (!title || !description || !department_id || !course_id || !resourceType || !file) {
       toast.error('Please fill in all fields and attach a file.');
       return;
     }
@@ -197,23 +228,20 @@ export default function UploadPage() {
     const data = new FormData();
     data.append('title', title);
     data.append('description', description);
-    data.append('courseCode', courseCode);
-    data.append('department', department);
+    data.append('department_id', department_id);
+    data.append('course_id', course_id);
     data.append('resourceType', resourceType);
     data.append('file', file);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/resources/upload`, {
+      const res = await fetch('/api/resources/upload', {
         method: 'POST',
-        credentials: 'include',
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: data,
       });
       const result = await res.json();
       if (result.success) {
-        toast.success('Resource uploaded! Pending admin approval.');
+        toast.success('Resource uploaded successfully!');
         navigate('/profile');
       } else {
         toast.error(result.message || 'Upload failed.');
@@ -345,26 +373,10 @@ export default function UploadPage() {
               />
             </div>
 
-            {/* Course Code + Department + Resource Type — 3 columns */}
+            {/* Department + Course Code + Resource Type — 3 columns */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '20px' }}>
-              <div>
-                <label style={labelStyle}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
-                    <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" />
-                  </svg>
-                  Course Code <span style={{ color: '#e05a3a' }}>*</span>
-                </label>
-                <select
-                  className="up-select"
-                  name="courseCode"
-                  value={formData.courseCode}
-                  onChange={handleChange}
-                  style={selectStyle}
-                >
-                  <option value="">Select Course Code</option>
-                  {COURSE_CODES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
+
+              {/* Department */}
               <div>
                 <label style={labelStyle}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
@@ -375,15 +387,48 @@ export default function UploadPage() {
                 </label>
                 <select
                   className="up-select"
-                  name="department"
-                  value={formData.department}
+                  name="department_id"
+                  value={formData.department_id}
                   onChange={handleChange}
                   style={selectStyle}
                 >
                   <option value="">Select Department</option>
-                  {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                  {departments.map(d => (
+                    <option key={d.department_id} value={d.department_id}>
+                      {d.department_name}
+                    </option>
+                  ))}
                 </select>
               </div>
+
+              {/* Course Code — disabled until department selected */}
+              <div>
+                <label style={labelStyle}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" />
+                  </svg>
+                  Course Code <span style={{ color: '#e05a3a' }}>*</span>
+                </label>
+                <select
+                  className="up-select"
+                  name="course_id"
+                  value={formData.course_id}
+                  onChange={handleChange}
+                  disabled={!formData.department_id}
+                  style={!formData.department_id ? disabledSelectStyle : selectStyle}
+                >
+                  <option value="">
+                    {formData.department_id ? 'Select Course Code' : 'Select Department first'}
+                  </option>
+                  {courses.map(c => (
+                    <option key={c.course_id} value={c.course_id}>
+                      {c.course_code}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Resource Type */}
               <div>
                 <label style={labelStyle}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">

@@ -7,8 +7,11 @@ interface Resource {
   id: number;
   title: string;
   description: string;
-  department: string;
-  courseCode: string;
+  department: string;   
+  courseCode: string;   
+  courseName: string;   
+  department_id: number;
+  course_id: number;
   fileType: string;
   fileSize?: string;
   uploadedBy: string;
@@ -16,7 +19,18 @@ interface Resource {
   downloads: number;
 }
 
-// Navigation items
+interface Department {
+  department_id: number;
+  department_name: string;
+}
+
+interface Course {
+  course_id: number;
+  course_name: string;
+  course_code: string;
+  department_id: number;
+}
+
 const NAV_ITEMS = [
   { label: 'Home', to: '/', icon: '🏠' },
   { label: 'Resources', to: '/resources', icon: '📄' },
@@ -25,85 +39,7 @@ const NAV_ITEMS = [
   { label: 'Profile', to: '/profile', icon: '👤' },
 ];
 
-const DEPARTMENTS = [
-  'Computer Science', 'Mathematics', 'Physics', 'Chemistry',
-  'Biology', 'English', 'History', 'Economics', 'EEE', 'IPE',
-];
-
-const COURSE_CODES = [
-  'CSE101', 'CSE201', 'CSE301', 'CSE307',
-  'MATH101', 'MATH201',
-  'PHY101', 'PHY201',
-  'CHM101', 'CHM201',
-  'BIO101', 'BIO201',
-  'EEE301', 'IPE400',
-];
-
-const FILE_TYPES = ['PDF', 'DOCX', 'XLSX', 'PPT', 'ZIP', 'MP4', 'JPG'];
-
-// Mock data
-const MOCK_RESOURCES: Resource[] = [
-  {
-    id: 1,
-    title: 'Introduction to Data Structures',
-    description: 'Comprehensive notes on DSA including trees, graphs, and sorting',
-    department: 'Computer Science',
-    courseCode: 'CSE201',
-    fileType: 'PDF',
-    fileSize: '2.5 MB',
-    uploadedBy: 'Tahmid',
-    uploadedAt: '2026-03-01',
-    downloads: 234,
-  },
-  {
-    id: 2,
-    title: 'Introduction to Algorithms',
-    description: 'Algorithm design and analysis with complexity proofs',
-    department: 'Computer Science',
-    courseCode: 'CSE201',
-    fileType: 'PDF',
-    fileSize: '1.8 MB',
-    uploadedBy: 'Shia Johnson',
-    uploadedAt: '2026-02-28',
-    downloads: 108,
-  },
-  {
-    id: 3,
-    title: 'Power Systems Fundamentals',
-    description: 'Power generation, transmission and distribution fundamentals',
-    department: 'EEE',
-    courseCode: 'EEE301',
-    fileType: 'DOCX',
-    fileSize: '3.2 MB',
-    uploadedBy: 'Felix Miller',
-    uploadedAt: '2026-02-25',
-    downloads: 79,
-  },
-  {
-    id: 4,
-    title: 'Quality Management and Control',
-    description: 'TQM principles, Six Sigma and quality frameworks',
-    department: 'IPE',
-    courseCode: 'IPE400',
-    fileType: 'PPT',
-    fileSize: '4.0 MB',
-    uploadedBy: 'Avery Jordan',
-    uploadedAt: '2026-02-20',
-    downloads: 139,
-  },
-  {
-    id: 5,
-    title: 'Microprocessors and Microcontrollers',
-    description: 'Architecture, programming and interfacing',
-    department: 'Computer Science',
-    courseCode: 'CSE307',
-    fileType: 'ZIP',
-    fileSize: '6.1 MB',
-    uploadedBy: 'Skyler Reed',
-    uploadedAt: '2026-02-18',
-    downloads: 164,
-  },
-];
+const FILE_TYPES = ['PDF', 'DOCX', 'XLSX', 'PPTX', 'ZIP', 'MP4', 'JPG'];
 
 // Sidebar Component
 function Sidebar({ active }: { active: string }) {
@@ -162,16 +98,10 @@ function Sidebar({ active }: { active: string }) {
         gap: '10px',
       }}>
         <div style={{
-          width: '40px',
-          height: '40px',
-          borderRadius: '50%',
+          width: '40px', height: '40px', borderRadius: '50%',
           background: '#8aafc5',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          fontWeight: 700,
-          fontSize: '0.95rem',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'white', fontWeight: 700, fontSize: '0.95rem',
         }}>SU</div>
         <div>
           <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1a3a50' }}>Student User</div>
@@ -184,37 +114,83 @@ function Sidebar({ active }: { active: string }) {
 
 // Main Resources Page Component
 export default function ResourcesPage() {
-  const [resources, setResources] = useState<Resource[]>([]);
+  // All resources fetched once — never re-fetched on filter change (CSR)
+  const [allResources, setAllResources] = useState<Resource[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);   // courses for selected dept
   const [loading, setLoading] = useState(true);
+
+  // Filter state
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('');
   const [selectedFileType, setSelectedFileType] = useState('');
 
-  // Load resources
+  // ── Fetch all resources + all departments once on mount ──────────────────
   useEffect(() => {
-    const loadResources = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/resources`);
-        if (response.ok) {
-          const data = await response.json();
-          setResources(data);
-        } else {
-          setResources(MOCK_RESOURCES);
-        }
-      } catch {
-        setResources(MOCK_RESOURCES);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadResources();
+    Promise.all([
+      fetch('/api/resources').then(r => r.json()),
+      fetch('/api/departments').then(r => r.json()),
+    ])
+      .then(([resourceData, departmentData]) => {
+        setAllResources(resourceData);
+        setDepartments(departmentData);
+      })
+      .catch(() => toast.error('Failed to load data'))
+      .finally(() => setLoading(false));
   }, []);
 
-  // Handle download
+  // ── When department filter changes, fetch that dept's courses (CSR cache) ─
+  useEffect(() => {
+    if (selectedDepartment) {
+      fetch(`/api/courses/${selectedDepartment}`)
+        .then(r => r.json())
+        .then(setCourses)
+        .catch(() => toast.error('Failed to load courses'));
+    } else {
+      setCourses([]);
+    }
+    // Reset course selection when department changes
+    setSelectedCourse('');
+  }, [selectedDepartment]);
+
+  const filteredResources = allResources.filter(resource => {
+    const matchesSearch =
+      searchTerm === '' ||
+      resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (resource.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      resource.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      resource.courseCode.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // JOIN on department_id (from backend JOIN result stored in resource)
+    const matchesDepartment =
+      selectedDepartment === '' ||
+      String(resource.department_id) === String(selectedDepartment);
+
+    const matchesCourse =
+      selectedCourse === '' ||
+      String(resource.course_id) === String(selectedCourse);
+
+    const matchesFileType =
+      selectedFileType === '' ||
+      resource.fileType === selectedFileType;
+
+    return matchesSearch && matchesDepartment && matchesCourse && matchesFileType;
+  });
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedDepartment('');
+    setSelectedCourse('');
+    setSelectedFileType('');
+  };
+
+  const hasActiveFilters = searchTerm || selectedDepartment || selectedCourse || selectedFileType;
+
+  // ── Download handler ──
   const handleDownload = async (id: number) => {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/download/${id}`, {
+    const response = await fetch(`/api/download/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -232,32 +208,13 @@ export default function ResourcesPage() {
     URL.revokeObjectURL(url);
   };
 
-  // Filter resources
-  const filteredResources = resources.filter(resource => {
-    const matchesSearch = searchTerm === '' ||
-      resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      resource.courseCode.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDepartment = selectedDepartment === '' || resource.department === selectedDepartment;
-    const matchesCourse = selectedCourse === '' || resource.courseCode === selectedCourse;
-    const matchesFileType = selectedFileType === '' || resource.fileType === selectedFileType;
-    return matchesSearch && matchesDepartment && matchesCourse && matchesFileType;
-  });
-
-  const clearFilters = () => {
-    setSearchTerm('');
-    setSelectedDepartment('');
-    setSelectedCourse('');
-    setSelectedFileType('');
-  };
-
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f0f4f8' }}>
       <Sidebar active="Resources" />
 
       <main style={{ flex: 1, padding: '32px 40px', overflowY: 'auto' }}>
 
-        {/* Header — no Upload button here */}
+        {/* Header */}
         <div style={{ marginBottom: '32px' }}>
           <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#1a3a50', margin: 0 }}>
             Resource Library
@@ -276,10 +233,12 @@ export default function ResourcesPage() {
           boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
         }}>
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+
+            {/* Search */}
             <div style={{ flex: 1, minWidth: '250px' }}>
               <input
                 type="text"
-                placeholder="Search resources..."
+                placeholder="Search by title, department or course..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 style={{
@@ -294,34 +253,70 @@ export default function ResourcesPage() {
               />
             </div>
 
+            {/* Department filter — loaded from API */}
             <select
               value={selectedDepartment}
               onChange={e => setSelectedDepartment(e.target.value)}
-              style={{ padding: '10px 16px', border: '1px solid #dce8f0', borderRadius: '8px', fontSize: '0.95rem', minWidth: '150px' }}
+              style={{
+                padding: '10px 16px',
+                border: '1px solid #dce8f0',
+                borderRadius: '8px',
+                fontSize: '0.95rem',
+                minWidth: '160px',
+              }}
             >
               <option value="">All Departments</option>
-              {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+              {departments.map(d => (
+                <option key={d.department_id} value={d.department_id}>
+                  {d.department_name}
+                </option>
+              ))}
             </select>
 
+            {/* Course filter — only shows courses for selected department */}
             <select
               value={selectedCourse}
               onChange={e => setSelectedCourse(e.target.value)}
-              style={{ padding: '10px 16px', border: '1px solid #dce8f0', borderRadius: '8px', fontSize: '0.95rem', minWidth: '150px' }}
+              disabled={!selectedDepartment}
+              style={{
+                padding: '10px 16px',
+                border: '1px solid #dce8f0',
+                borderRadius: '8px',
+                fontSize: '0.95rem',
+                minWidth: '160px',
+                background: !selectedDepartment ? '#f4f8fb' : 'white',
+                color: !selectedDepartment ? '#b0c4d4' : '#1a3a50',
+                cursor: !selectedDepartment ? 'not-allowed' : 'pointer',
+              }}
             >
-              <option value="">All Courses</option>
-              {COURSE_CODES.map(c => <option key={c} value={c}>{c}</option>)}
+              <option value="">
+                {selectedDepartment ? 'All Courses' : 'Select Dept First'}
+              </option>
+              {courses.map(c => (
+                <option key={c.course_id} value={c.course_id}>
+                  {c.course_code}
+                </option>
+              ))}
             </select>
 
+            {/* File type filter */}
             <select
               value={selectedFileType}
               onChange={e => setSelectedFileType(e.target.value)}
-              style={{ padding: '10px 16px', border: '1px solid #dce8f0', borderRadius: '8px', fontSize: '0.95rem', minWidth: '150px' }}
+              style={{
+                padding: '10px 16px',
+                border: '1px solid #dce8f0',
+                borderRadius: '8px',
+                fontSize: '0.95rem',
+                minWidth: '130px',
+              }}
             >
               <option value="">All Types</option>
               {FILE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
 
-            {(searchTerm || selectedDepartment || selectedCourse || selectedFileType) && (
+            {/* Clear filters */}
+            {hasActiveFilters && (
               <button
                 onClick={clearFilters}
                 style={{
@@ -347,10 +342,7 @@ export default function ResourcesPage() {
           overflow: 'hidden',
           boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
         }}>
-          <div style={{
-            padding: '16px 24px',
-            borderBottom: '1px solid #dce8f0',
-          }}>
+          <div style={{ padding: '16px 24px', borderBottom: '1px solid #dce8f0' }}>
             <h3 style={{ margin: 0, color: '#1a3a50', fontSize: '1.1rem' }}>
               Available Resources ({filteredResources.length})
             </h3>
@@ -372,7 +364,13 @@ export default function ResourcesPage() {
                 <thead>
                   <tr style={{ background: '#f8fafc', borderBottom: '1px solid #dce8f0' }}>
                     {['Resource', 'Department', 'Course', 'Type', 'Uploader', 'Downloads', 'Action'].map(h => (
-                      <th key={h} style={{ padding: '12px 24px', textAlign: 'left', color: '#6a8fa8', fontSize: '0.9rem', fontWeight: 600 }}>
+                      <th key={h} style={{
+                        padding: '12px 24px',
+                        textAlign: 'left',
+                        color: '#6a8fa8',
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                      }}>
                         {h}
                       </th>
                     ))}
@@ -386,11 +384,15 @@ export default function ResourcesPage() {
                           {resource.title}
                         </div>
                         <div style={{ fontSize: '0.85rem', color: '#6a8fa8' }}>
-                          {resource.description.substring(0, 60)}...
+                          {(resource.description || '').substring(0, 60)}...
                         </div>
                       </td>
-                      <td style={{ padding: '16px 24px', color: '#4a6a80' }}>{resource.department}</td>
-                      <td style={{ padding: '16px 24px', color: '#4a6a80' }}>{resource.courseCode}</td>
+                      <td style={{ padding: '16px 24px', color: '#4a6a80' }}>
+                        {resource.department}
+                      </td>
+                      <td style={{ padding: '16px 24px', color: '#4a6a80' }}>
+                        {resource.courseName} ({resource.courseCode})
+                      </td>
                       <td style={{ padding: '16px 24px' }}>
                         <span style={{
                           background: '#e3f0f8',
@@ -403,8 +405,12 @@ export default function ResourcesPage() {
                           {resource.fileType}
                         </span>
                       </td>
-                      <td style={{ padding: '16px 24px', color: '#4a6a80' }}>{resource.uploadedBy}</td>
-                      <td style={{ padding: '16px 24px', color: '#4a6a80' }}>⬇️ {resource.downloads}</td>
+                      <td style={{ padding: '16px 24px', color: '#4a6a80' }}>
+                        {resource.uploadedBy}
+                      </td>
+                      <td style={{ padding: '16px 24px', color: '#4a6a80' }}>
+                        ⬇️ {resource.downloads}
+                      </td>
                       <td style={{ padding: '16px 24px' }}>
                         <button
                           onClick={() => handleDownload(resource.id)}
