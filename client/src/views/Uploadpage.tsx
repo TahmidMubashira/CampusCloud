@@ -168,7 +168,6 @@ export default function UploadPage() {
   const [dragOver, setDragOver] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Dynamic data from API
   const [departments, setDepartments] = useState<Department[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
 
@@ -181,25 +180,34 @@ export default function UploadPage() {
     file: null as File | null,
   });
 
-  // Load departments on mount
+  // ── Load departments on mount ──────────────────────────────────────────────
   useEffect(() => {
-    fetch('/api/departments')
-      .then(r => r.json())
-      .then(setDepartments)
-      .catch(() => toast.error('Failed to load departments'));
+    fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/departments`)
+  .then(r => {
+    console.log('status:', r.status);
+    console.log('ok:', r.ok);
+    return r.json();
+  })
+  .then(data => {
+    console.log('departments raw response:', data);
+    setDepartments(Array.isArray(data) ? data : []);
+  })
+  .catch(err => {
+    console.error('fetch error:', err); // ← catch network errors
+    toast.error('Failed to load departments');
+  });
   }, []);
 
-  // Load courses when department changes
+  // ── Load courses when department changes ───────────────────────────────────
   useEffect(() => {
     if (formData.department_id) {
-      fetch(`/api/courses/${formData.department_id}`)
+      fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/courses/${formData.department_id}`)
         .then(r => r.json())
-        .then(setCourses)
+        .then(data => setCourses(Array.isArray(data) ? data : []))    // ← fixed
         .catch(() => toast.error('Failed to load courses'));
     } else {
       setCourses([]);
     }
-    // Reset course selection when department changes
     setFormData(p => ({ ...p, course_id: '' }));
   }, [formData.department_id]);
 
@@ -373,7 +381,7 @@ export default function UploadPage() {
               />
             </div>
 
-            {/* Department + Course Code + Resource Type — 3 columns */}
+            {/* Department + Course Code + Resource Type */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '20px' }}>
 
               {/* Department */}
@@ -401,7 +409,7 @@ export default function UploadPage() {
                 </select>
               </div>
 
-              {/* Course Code — disabled until department selected */}
+              {/* Course Code */}
               <div>
                 <label style={labelStyle}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">

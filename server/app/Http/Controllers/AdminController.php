@@ -31,7 +31,6 @@ class AdminController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Admin login successful.',
             'token'   => $token,
             'admin'   => [
                 'id'    => $admin->admin_id,
@@ -46,13 +45,13 @@ class AdminController extends Controller
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
-        return response()->json(['success' => true, 'message' => 'Logged out.']);
+        return response()->json(['success' => true]);
     }
 
     // Get pending resources
     public function pending()
     {
-        $resources = Resource::with('user')
+        $resources = Resource::with(['user', 'department', 'course'])
             ->where('status', 'pending')
             ->latest()
             ->get();
@@ -63,13 +62,24 @@ class AdminController extends Controller
                 return [
                     'id'         => $r->id,
                     'title'      => $r->title,
-                    'department' => $r->department,
-                    'courseCode' => $r->courseCode,
+                    'department' => $r->department->department_name ?? '',
+                    'courseCode' => $r->course->course_code ?? '',
                     'fileType'   => $r->file_type,
-                    'uploadedBy' => $r->user->name,
+                    'uploadedBy' => $r->user->name ?? '',
                     'timeAgo'    => $r->created_at->diffForHumans(),
                 ];
             }),
+        ]);
+    }
+
+    // Get stats
+    public function stats()
+    {
+        return response()->json([
+            'success'        => true,
+            'totalDownloads' => Resource::sum('downloads'),
+            'pendingCount'   => Resource::where('status', 'pending')->count(),
+            'approvedCount'  => Resource::where('status', 'approved')->count(),
         ]);
     }
 
@@ -77,17 +87,13 @@ class AdminController extends Controller
     public function approve($id)
     {
         $resource = Resource::findOrFail($id);
-        $resource->update([
-            'is_approved' => 1,
-            'status'      => 'approved',
-        ]);
+        $resource->update(['is_approved' => 1, 'status' => 'approved']);
 
-        // Track activity
         ActivityLog::create([
             'user_id'     => $resource->user_id,
             'action'      => 'approved',
             'resource_id' => $resource->id,
-            'details'     => 'Resource approved by admin: ' . $resource->title,
+            'details'     => 'Approved: ' . $resource->title,
         ]);
 
         return response()->json(['success' => true, 'message' => 'Resource approved.']);
@@ -97,34 +103,15 @@ class AdminController extends Controller
     public function reject($id)
     {
         $resource = Resource::findOrFail($id);
-        $resource->update([
-            'is_approved' => 0,
-            'status'      => 'rejected',
-        ]);
+        $resource->update(['is_approved' => 0, 'status' => 'rejected']);
 
-        // Track activity
         ActivityLog::create([
             'user_id'     => $resource->user_id,
             'action'      => 'rejected',
             'resource_id' => $resource->id,
-            'details'     => 'Resource rejected by admin: ' . $resource->title,
+            'details'     => 'Rejected: ' . $resource->title,
         ]);
 
         return response()->json(['success' => true, 'message' => 'Resource rejected.']);
-    }
-
-    // Get total downloads
-    public function stats()
-    {
-        $totalDownloads = Resource::sum('downloads');
-        $pendingCount   = Resource::where('status', 'pending')->count();
-        $approvedCount  = Resource::where('status', 'approved')->count();
-
-        return response()->json([
-            'success'        => true,
-            'totalDownloads' => $totalDownloads,
-            'pendingCount'   => $pendingCount,
-            'approvedCount'  => $approvedCount,
-        ]);
     }
 }
