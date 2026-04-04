@@ -7,12 +7,25 @@ interface Resource {
   title: string;
   description: string;
   department: string;
+  department_id: number;
   courseCode: string;
+  course_id: number;
   fileType: string;
   fileSize: string;
   uploadedBy: string;
   uploadedAt: string;
   downloads: number;
+}
+
+interface Department {
+  department_id: number;
+  department_name: string;
+}
+
+interface Course {
+  course_id: number;
+  course_name: string;
+  course_code: string;
 }
 
 interface User {
@@ -23,8 +36,9 @@ interface User {
 }
 
 const RESOURCE_TYPES = ['All', 'Lecture Notes', 'Past Papers', 'Assignments', 'Books', 'Lab Reports'];
+const FILE_TYPES = ['PDF', 'DOCX', 'XLSX', 'PPTX', 'ZIP', 'MP4', 'JPG'];
 
-function ResourceCard({ resource }: { resource: Resource }) {
+function ResourceCard({ resource, onDownload }: { resource: Resource; onDownload: (id: number) => void }) {
   const [hovered, setHovered] = useState(false);
   return (
     <div
@@ -70,7 +84,8 @@ function ResourceCard({ resource }: { resource: Resource }) {
       </div>
 
       {/* Description */}
-      <p style={{ color: '#7a9db5', fontSize: '0.75rem', margin: '0 0 0.75rem', lineHeight: 1.5,
+      <p style={{
+        color: '#7a9db5', fontSize: '0.75rem', margin: '0 0 0.75rem', lineHeight: 1.5,
         display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden'
       }}>
         {resource.description}
@@ -98,9 +113,22 @@ function ResourceCard({ resource }: { resource: Resource }) {
             </span>
           )}
         </div>
-        <span style={{ color: '#a0bece', fontSize: '0.7rem' }}>
-          ⬇️ {resource.downloads}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ color: '#a0bece', fontSize: '0.7rem' }}>⬇️ {resource.downloads}</span>
+          <button
+            onClick={e => { e.stopPropagation(); onDownload(resource.id); }}
+            style={{
+              background: 'transparent', border: '1px solid #2e7da8',
+              color: '#2e7da8', borderRadius: '5px', padding: '2px 10px',
+              fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer',
+              fontFamily: "'Nunito', sans-serif", transition: 'all 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#2e7da8'; e.currentTarget.style.color = 'white'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#2e7da8'; }}
+          >
+            Download
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -125,33 +153,64 @@ function ResourceSkeleton() {
 export default function HomePage() {
   const [search, setSearch] = useState('');
   const [activeType, setActiveType] = useState('All');
-  const [resources, setResources] = useState<Resource[]>([]);
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [selectedCourse, setSelectedCourse] = useState('');
+  const [selectedFileType, setSelectedFileType] = useState('');
+
+  // All data fetched once — CSR
+  const [allResources, setAllResources] = useState<Resource[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [user, setUser] = useState<User | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
   const navigate = useNavigate();
 
-  // Check if user is logged in from localStorage
+  // Check if user is logged in
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    if (storedUser) setUser(JSON.parse(storedUser));
   }, []);
+
+  // Fetch all resources + departments ONCE on mount (CSR)
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/resources').then(r => r.json()),
+      fetch('/api/departments').then(r => r.json()),
+    ])
+      .then(([resourceData, departmentData]) => {
+        setAllResources(Array.isArray(resourceData) ? resourceData : []);
+        setDepartments(Array.isArray(departmentData) ? departmentData : []);
+      })
+      .catch(() => setError('Could not connect to server.'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Fetch courses for selected department only
+  useEffect(() => {
+    if (selectedDepartment) {
+      fetch(`/api/courses/${selectedDepartment}`)
+        .then(r => r.json())
+        .then(data => setCourses(Array.isArray(data) ? data : []));
+    } else {
+      setCourses([]);
+    }
+    setSelectedCourse('');
+  }, [selectedDepartment]);
 
   // Logout handler
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
       const token = localStorage.getItem('token');
-      await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/logout`, {
+      await fetch('/api/logout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        credentials: 'include',
       });
     } catch {
       console.error('Logout error');
@@ -164,31 +223,66 @@ export default function HomePage() {
     }
   };
 
-  // Fetch resources from API with debounce
-  useEffect(() => {
-    const fetchResources = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const params = new URLSearchParams();
-        if (activeType !== 'All') params.append('resourceType', activeType);
-        if (search) params.append('search', search);
+  // Download handler
+  const handleDownload = async (id: number) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`/api/download/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) {
+      alert('Download failed. Please try again.');
+      return;
+    }
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
-        const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_ENDPOINT}/api/resources?${params.toString()}`
-        );
-        const data = await res.json();
-        setResources(Array.isArray(data) ? data : []);
-      } catch {
-        setError('Could not connect to server.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // ── CSR filtering — pure in-memory, no API calls on filter change ──────────
+  const filteredResources = allResources.filter(resource => {
+    const matchesSearch =
+      search === '' ||
+      resource.title.toLowerCase().includes(search.toLowerCase()) ||
+      (resource.description || '').toLowerCase().includes(search.toLowerCase()) ||
+      resource.department.toLowerCase().includes(search.toLowerCase()) ||
+      resource.courseCode.toLowerCase().includes(search.toLowerCase());
 
-    const timer = setTimeout(fetchResources, 400);
-    return () => clearTimeout(timer);
-  }, [activeType, search]);
+    // Resource type pill filter
+    const matchesType =
+      activeType === 'All' ||
+      resource.fileType === activeType;
+
+    // JOIN on department_id
+    const matchesDepartment =
+      selectedDepartment === '' ||
+      String(resource.department_id) === String(selectedDepartment);
+
+    // JOIN on course_id
+    const matchesCourse =
+      selectedCourse === '' ||
+      String(resource.course_id) === String(selectedCourse);
+
+    // File type dropdown filter
+    const matchesFileType =
+      selectedFileType === '' ||
+      resource.fileType === selectedFileType;
+
+    return matchesSearch && matchesType && matchesDepartment && matchesCourse && matchesFileType;
+  });
+
+  const hasActiveFilters = search || activeType !== 'All' || selectedDepartment || selectedCourse || selectedFileType;
+
+  const clearFilters = () => {
+    setSearch('');
+    setActiveType('All');
+    setSelectedDepartment('');
+    setSelectedCourse('');
+    setSelectedFileType('');
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: '#f2f7fb', fontFamily: "'Nunito', sans-serif" }}>
@@ -211,6 +305,9 @@ export default function HomePage() {
         .nav-auth-btn:hover { opacity: 0.88; }
         @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
         .skeleton { background: linear-gradient(90deg,#f0f6fa 25%,#e0eef6 50%,#f0f6fa 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        .filter-select { padding: 7px 12px; border: 1.5px solid #c8dce8; border-radius: 8px; font-size: 0.8rem; font-family: 'Nunito', sans-serif; color: #4a6a80; background: #fff; outline: none; cursor: pointer; }
+        .filter-select:focus { border-color: #7ab0cc; }
+        .filter-select:disabled { background: #f4f8fb; color: #b0c4d4; cursor: not-allowed; }
       `}</style>
 
       {/* ── Navbar ── */}
@@ -230,22 +327,19 @@ export default function HomePage() {
 
           <Navbar.Collapse>
             <Nav className="ms-auto align-items-center gap-1">
+              <Link to="/resources" className="nav-auth-btn" style={{
+                marginLeft: '8px', background: 'transparent',
+                border: '1.5px solid #a8c4d4', color: '#4a6a80',
+              }}>
+                📄 Resources
+              </Link>
 
-            <Link to="/resources" className="nav-auth-btn" style={{
-                 marginLeft: '8px', background: 'transparent',
-                  border: '1.5px solid #a8c4d4', color: '#4a6a80',
-            }}>
-              📄 Resources
-             </Link>
-
-              {/* Admin dropdown */}
               <NavDropdown title="Admin" id="admin-dd" className="cc-dropdown-toggle">
                 <NavDropdown.Item as={Link} to="/admin/login">Admin Login</NavDropdown.Item>
                 <NavDropdown.Item as={Link} to="/admin">Dashboard</NavDropdown.Item>
               </NavDropdown>
 
               {user ? (
-                // ── Logged in ──
                 <>
                   <Link to="/profile" className="nav-auth-btn" style={{
                     marginLeft: '8px', background: '#edf5fa',
@@ -266,7 +360,6 @@ export default function HomePage() {
                   </button>
                 </>
               ) : (
-                // ── Not logged in ──
                 <>
                   <Link to="/login" className="nav-auth-btn" style={{
                     marginLeft: '8px', background: 'transparent',
@@ -283,7 +376,6 @@ export default function HomePage() {
                   </Link>
                 </>
               )}
-
             </Nav>
           </Navbar.Collapse>
         </Container>
@@ -349,7 +441,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div style={{ position: 'absolute', top: '12px', right: '14px', background: '#fff', borderRadius: '7px', padding: '4px 10px', fontSize: '0.67rem', fontWeight: 700, color: '#2e7da8', border: '1px solid #a8c4d4', fontFamily: "'Nunito', sans-serif" }}>
-                  📚 {resources.length}+ Resources
+                  📚 {allResources.length}+ Resources
                 </div>
                 <div style={{ position: 'absolute', bottom: '12px', left: '14px', background: '#fff', borderRadius: '7px', padding: '4px 10px', fontSize: '0.67rem', fontWeight: 700, color: '#3a8a5e', border: '1px solid #b8d8c8', fontFamily: "'Nunito', sans-serif" }}>
                   ✅ Free to Download
@@ -371,8 +463,8 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* Resource type filter pills */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '2rem', flexWrap: 'wrap' }}>
+        {/* Resource type pills */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
           {RESOURCE_TYPES.map(type => (
             <button
               key={type}
@@ -384,16 +476,60 @@ export default function HomePage() {
           ))}
         </div>
 
-        {/* Results info */}
+        {/* Department / Course / File type dropdowns */}
+        <div style={{
+          display: 'flex', gap: '10px', flexWrap: 'wrap',
+          justifyContent: 'center', marginBottom: '1.5rem',
+        }}>
+          <select
+            className="filter-select"
+            value={selectedDepartment}
+            onChange={e => setSelectedDepartment(e.target.value)}
+          >
+            <option value="">All Departments</option>
+            {departments.map(d => (
+              <option key={d.department_id} value={d.department_id}>
+                {d.department_name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="filter-select"
+            value={selectedCourse}
+            onChange={e => setSelectedCourse(e.target.value)}
+            disabled={!selectedDepartment}
+          >
+            <option value="">
+              {selectedDepartment ? 'All Courses' : 'Select Dept First'}
+            </option>
+            {courses.map(c => (
+              <option key={c.course_id} value={c.course_id}>
+                {c.course_code}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="filter-select"
+            value={selectedFileType}
+            onChange={e => setSelectedFileType(e.target.value)}
+          >
+            <option value="">All File Types</option>
+            {FILE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+
+        {/* Results info + clear */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <p style={{ color: '#7a9db5', fontSize: '0.78rem', margin: 0 }}>
             {loading ? 'Loading...' : (
-              <>Showing <strong style={{ color: '#2e7da8' }}>{resources.length}</strong> result{resources.length !== 1 ? 's' : ''}</>
+              <>Showing <strong style={{ color: '#2e7da8' }}>{filteredResources.length}</strong> result{filteredResources.length !== 1 ? 's' : ''}</>
             )}
           </p>
-          {(search || activeType !== 'All') && (
+          {hasActiveFilters && (
             <button
-              onClick={() => { setSearch(''); setActiveType('All'); }}
+              onClick={clearFilters}
               style={{ background: 'none', border: 'none', color: '#2e7da8', fontSize: '0.76rem', cursor: 'pointer', textDecoration: 'underline', fontFamily: "'Nunito', sans-serif" }}
             >
               Clear filters
@@ -401,7 +537,7 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Error state */}
+        {/* Error */}
         {error && (
           <div style={{ textAlign: 'center', padding: '2rem', color: '#e07a7a', fontSize: '0.85rem' }}>
             ⚠️ {error}
@@ -420,7 +556,7 @@ export default function HomePage() {
         )}
 
         {/* Empty state */}
-        {!loading && !error && resources.length === 0 && (
+        {!loading && !error && filteredResources.length === 0 && (
           <div style={{ textAlign: 'center', padding: '3rem', color: '#7a9db5' }}>
             <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔍</div>
             <p style={{ fontSize: '0.9rem' }}>No resources found. Try a different search or filter.</p>
@@ -428,27 +564,29 @@ export default function HomePage() {
         )}
 
         {/* Resource grid */}
-        {!loading && !error && resources.length > 0 && (
+        {!loading && !error && filteredResources.length > 0 && (
           <Row className="g-3">
-            {resources.map(r => (
+            {filteredResources.map(r => (
               <Col key={r.id} xs={12} sm={6} md={4}>
-                <ResourceCard resource={r} />
+                <ResourceCard resource={r} onDownload={handleDownload} />
               </Col>
             ))}
           </Row>
         )}
 
         {/* View all button */}
-        {!loading && resources.length > 0 && (
+        {!loading && filteredResources.length > 0 && (
           <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
-            <Button style={{
-              background: 'linear-gradient(135deg, #2e7da8, #4a9eca)', border: 'none',
-              fontFamily: "'Nunito', sans-serif", fontWeight: 700, fontSize: '0.85rem',
-              borderRadius: '8px', padding: '10px 30px', color: '#fff',
-              boxShadow: '0 4px 14px rgba(46,125,168,0.28)',
-            }}>
-              View All Resources →
-            </Button>
+            <Link to="/resources">
+              <Button style={{
+                background: 'linear-gradient(135deg, #2e7da8, #4a9eca)', border: 'none',
+                fontFamily: "'Nunito', sans-serif", fontWeight: 700, fontSize: '0.85rem',
+                borderRadius: '8px', padding: '10px 30px', color: '#fff',
+                boxShadow: '0 4px 14px rgba(46,125,168,0.28)',
+              }}>
+                View All Resources →
+              </Button>
+            </Link>
           </div>
         )}
       </Container>

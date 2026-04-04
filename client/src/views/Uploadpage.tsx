@@ -182,7 +182,7 @@ export default function UploadPage() {
 
   // ── Load departments on mount ──────────────────────────────────────────────
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/departments`)
+    fetch('/api/departments')
   .then(r => {
     console.log('status:', r.status);
     console.log('ok:', r.ok);
@@ -201,7 +201,7 @@ export default function UploadPage() {
   // ── Load courses when department changes ───────────────────────────────────
   useEffect(() => {
     if (formData.department_id) {
-      fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/courses/${formData.department_id}`)
+      fetch(`/api/courses/${formData.department_id}`)
         .then(r => r.json())
         .then(data => setCourses(Array.isArray(data) ? data : []))    // ← fixed
         .catch(() => toast.error('Failed to load courses'));
