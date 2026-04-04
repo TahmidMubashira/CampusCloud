@@ -3,7 +3,6 @@ import { Container, Row, Col, Form, Button, Alert } from 'react-bootstrap';
 
 
 
-
 const inputStyle = {
   background: '#f8fafc',
   border: '1.5px solid #dce8f0',
@@ -417,6 +416,83 @@ export function RegisterPage() {
             For academic use only · CampusCloud © 2026
           </p>
         </div>
+      </div>
+    </div>
+  );
+}
+
+export function AdminLoginPage() {
+  const [form, setForm] = useState({ email: '', password: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_ENDPOINT}/api/admin/login`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        }
+      );
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.admin));
+        window.location.href = '/admin';
+      } else {
+        setError(data.message || 'Invalid credentials.');
+      }
+    } catch {
+      setError('Server error.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#f2f7fb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#fff', borderRadius: '16px', padding: '2.5rem 2rem', width: '100%', maxWidth: '400px', border: '1px solid #dce8f0', boxShadow: '0 4px 24px rgba(0,0,0,0.07)' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🔐</div>
+          <h2 style={{ fontWeight: 700, color: '#1a3a50', marginBottom: '6px' }}>Admin Login</h2>
+          <p style={{ color: '#7a9db5', fontSize: '0.84rem' }}>CampusCloud Admin Panel</p>
+        </div>
+
+        {error && <div style={{ background: '#fee2e2', color: '#dc2626', padding: '10px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.82rem' }}>{error}</div>}
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#4a6a80', marginBottom: '6px' }}>EMAIL</label>
+            <input
+              type="email"
+              value={form.email}
+              onChange={e => setForm({ ...form, email: e.target.value })}
+              placeholder="admin@campuscloud.com"
+              style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #dce8f0', borderRadius: '8px', fontSize: '0.88rem', color: '#1a3a50' }}
+            />
+          </div>
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#4a6a80', marginBottom: '6px' }}>PASSWORD</label>
+            <input
+              type="password"
+              value={form.password}
+              onChange={e => setForm({ ...form, password: e.target.value })}
+              placeholder="Enter admin password"
+              style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #dce8f0', borderRadius: '8px', fontSize: '0.88rem', color: '#1a3a50' }}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            style={{ width: '100%', padding: '11px', background: '#1a3a50', border: 'none', borderRadius: '8px', color: '#fff', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer' }}
+          >
+            {loading ? 'Signing in...' : 'Sign In as Admin →'}
+          </button>
+        </form>
       </div>
     </div>
   );
