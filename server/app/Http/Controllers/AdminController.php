@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Admin;
 use App\Models\Resource;
 use App\Models\ActivityLog;
+use App\Models\Reward;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -94,6 +95,14 @@ class AdminController extends Controller
             'action'      => 'approved',
             'resource_id' => $resource->id,
             'details'     => 'Approved: ' . $resource->title,
+        ]);
+
+        // Give reward to uploader when admin approves
+        Reward::create([
+            'user_id'            => $resource->user_id,
+            'reward_name'        => 'Resource Upload',
+            'reward_description' => 'You earned 10 points for uploading "' . $resource->title . '"',
+            'points_earned'      => 10,
         ]);
 
         return response()->json(['success' => true, 'message' => 'Resource approved.']);
