@@ -15,6 +15,7 @@ interface Resource {
   uploadedBy: string;
   uploadedAt: string;
   downloads: number;
+  resourceType: string;
 }
 
 interface Department {
@@ -35,7 +36,7 @@ interface User {
   role: string;
 }
 
-const RESOURCE_TYPES = ['All', 'Lecture Notes', 'Past Papers', 'Assignments', 'Books', 'Lab Reports'];
+const RESOURCE_TYPES = ['All', 'Lecture Notes', 'Past Papers', 'Assignments', 'Books', 'Lab Reports', 'Projects'];
 const FILE_TYPES = ['PDF', 'DOCX', 'XLSX', 'PPTX', 'ZIP', 'MP4', 'JPG'];
 
 function ResourceCard({ resource, onDownload }: { resource: Resource; onDownload: (id: number) => void }) {
@@ -254,7 +255,7 @@ export default function HomePage() {
     // Resource type pill filter
     const matchesType =
       activeType === 'All' ||
-      resource.fileType === activeType;
+      resource.resourceType === activeType;
 
     // JOIN on department_id
     const matchesDepartment =

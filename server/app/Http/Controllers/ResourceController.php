@@ -42,6 +42,7 @@ class ResourceController extends Controller
                 'uploadedBy'    => $r->user->name ?? '',
                 'uploadedAt'    => $r->created_at->toDateString(),
                 'downloads'     => $r->downloads,
+                'resourceType' => $r->resourceType,
             ];
         }));
     }

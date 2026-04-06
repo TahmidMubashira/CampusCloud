@@ -1,8 +1,8 @@
 CREATE TABLE activity_logs (
     id BIGINT IDENTITY(1,1) PRIMARY KEY,
-    user_id BIGINT NOT NULL,
+    user_id INT NOT NULL,
     action NVARCHAR(255) NOT NULL,
-    resource_id BIGINT NULL,
+    resource_id INT NULL,
     details NVARCHAR(MAX) NULL,
     created_at DATETIME2 NULL,
     updated_at DATETIME2 NULL,

@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\RewardController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -50,5 +51,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/pending',        [AdminController::class, 'pending']);
     Route::put('/admin/approve/{id}',   [AdminController::class, 'approve']);
     Route::put('/admin/reject/{id}',    [AdminController::class, 'reject']);
+
+    // ── Profile ───────────────────────────────────────────────────────────────
+    Route::get('/profile/stats', [ProfileController::class, 'stats']);
 
 });
