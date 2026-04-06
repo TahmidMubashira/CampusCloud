@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Resource;
 use App\Models\ActivityLog;
+use App\Models\Reward;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -101,6 +102,14 @@ class ResourceController extends Controller
             'action'      => 'download',
             'resource_id' => $resource->id,
             'details'     => 'Downloaded: ' . $resource->title,
+        ]);
+
+        // Award 5 points to the resource owner
+        Reward::create([
+            'user_id'            => $resource->user_id,
+            'points_earned'      => 5,
+            'reward_name'        => 'Download Reward',
+            'reward_description' => 'Someone downloaded your resource: ' . $resource->title,
         ]);
 
         $path = Storage::disk('public')->path($resource->file_path);
