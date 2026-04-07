@@ -23,9 +23,8 @@ interface ProfileStats {
   rejectedUploads: UploadItem[];
 }
 
-// ── Nav ───────────────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
-  { label: 'Home',      to: '/',         icon: '🏠' },
+  { label: 'Home',      to: '/',          icon: '🏠' },
   { label: 'Resources', to: '/resources', icon: '📄' },
   { label: 'Upload',    to: '/upload',    icon: '⬆️' },
   { label: 'Rewards',   to: '/rewards',   icon: '🏅' },
@@ -106,7 +105,11 @@ function StatCard({ label, value, sub, icon }: {
 }
 
 // ── Upload Row ────────────────────────────────────────────────────────────────
-function UploadRow({ item, badge }: { item: UploadItem; badge?: 'pending' | 'rejected' }) {
+function UploadRow({ item, badge, onDelete }: {
+  item: UploadItem;
+  badge?: 'pending' | 'rejected';
+  onDelete?: (id: number) => void;
+}) {
   const fileColors: Record<string, { bg: string; text: string }> = {
     PDF:  { bg: '#e8f0fb', text: '#3a6ab5' },
     DOCX: { bg: '#e8f5f0', text: '#2a8a5a' },
@@ -115,6 +118,21 @@ function UploadRow({ item, badge }: { item: UploadItem; badge?: 'pending' | 'rej
     XLSX: { bg: '#e8fbe8', text: '#2a8a2a' },
   };
   const color = fileColors[item.fileType] ?? { bg: '#f0f4f8', text: '#4a6a80' };
+
+  const handleDelete = async () => {
+    if (!window.confirm(`Delete "${item.title}"?`)) return;
+    const token = localStorage.getItem('token');
+    const res = await fetch(`/api/resources/${item.id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const result = await res.json();
+    if (result.success) {
+      onDelete?.(item.id);
+    } else {
+      alert(result.message || 'Delete failed.');
+    }
+  };
 
   return (
     <div style={{
@@ -150,6 +168,7 @@ function UploadRow({ item, badge }: { item: UploadItem; badge?: 'pending' | 'rej
           borderRadius: '4px', padding: '2px 8px',
           fontSize: '0.68rem', fontWeight: 700,
         }}>{item.fileType}</span>
+
         {badge === 'pending' && (
           <span style={{
             background: '#fff8e1', color: '#b8860b',
@@ -163,6 +182,21 @@ function UploadRow({ item, badge }: { item: UploadItem; badge?: 'pending' | 'rej
             borderRadius: '4px', padding: '2px 8px',
             fontSize: '0.65rem', fontWeight: 700,
           }}>❌ Rejected</span>
+        )}
+
+        {onDelete && (
+          <button
+            onClick={handleDelete}
+            style={{
+              background: '#fee2e2', color: '#dc2626',
+              border: 'none', borderRadius: '4px',
+              padding: '2px 8px', fontSize: '0.65rem',
+              fontWeight: 700, cursor: 'pointer',
+              marginTop: '2px',
+            }}
+          >
+            🗑️ Delete
+          </button>
         )}
       </div>
     </div>
@@ -235,6 +269,21 @@ export default function StudentProfile() {
       .catch(() => setError('Network error.'))
       .finally(() => setLoading(false));
   }, []);
+
+  // Remove deleted resource from all lists instantly
+  const handleDelete = (id: number) => {
+    setStats(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        allApproved:     prev.allApproved.filter(r => r.id !== id),
+        recentUploads:   prev.recentUploads.filter(r => r.id !== id),
+        pendingUploads:  prev.pendingUploads.filter(r => r.id !== id),
+        rejectedUploads: prev.rejectedUploads.filter(r => r.id !== id),
+        totalUploads:    prev.totalUploads - 1,
+      };
+    });
+  };
 
   if (loading) {
     return (
@@ -320,7 +369,11 @@ export default function StudentProfile() {
             <EmptyState message="No approved uploads yet. Upload a resource and wait for admin approval!" />
           ) : (
             displayedApproved.map(item => (
-              <UploadRow key={item.id} item={item} />
+              <UploadRow
+                key={item.id}
+                item={item}
+                onDelete={handleDelete}
+              />
             ))
           )}
         </SectionCard>
@@ -331,7 +384,12 @@ export default function StudentProfile() {
             <EmptyState message="No pending uploads." />
           ) : (
             stats.pendingUploads.map(item => (
-              <UploadRow key={item.id} item={item} badge="pending" />
+              <UploadRow
+                key={item.id}
+                item={item}
+                badge="pending"
+                onDelete={handleDelete}
+              />
             ))
           )}
         </SectionCard>
@@ -342,7 +400,12 @@ export default function StudentProfile() {
             <EmptyState message="No rejected uploads." />
           ) : (
             stats.rejectedUploads.map(item => (
-              <UploadRow key={item.id} item={item} badge="rejected" />
+              <UploadRow
+                key={item.id}
+                item={item}
+                badge="rejected"
+                onDelete={handleDelete}
+              />
             ))
           )}
         </SectionCard>

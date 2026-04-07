@@ -42,7 +42,7 @@ class ResourceController extends Controller
                 'uploadedBy'    => $r->user->name ?? '',
                 'uploadedAt'    => $r->created_at->toDateString(),
                 'downloads'     => $r->downloads,
-                'resourceType' => $r->resourceType,
+                'resourceType'  => $r->resourceType,
             ];
         }));
     }
@@ -51,32 +51,31 @@ class ResourceController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'title'        => 'required',
-            'description'  => 'required',
-            'department_id'=> 'required',
-            'course_id'    => 'required',
-            'resourceType' => 'required',
-            'file'         => 'required|file|max:51200'
+            'title'         => 'required',
+            'description'   => 'required',
+            'department_id' => 'required',
+            'course_id'     => 'required',
+            'resourceType'  => 'required',
+            'file'          => 'required|file|max:51200'
         ]);
 
         $file = $request->file('file');
         $path = $file->store('resources', 'public');
 
         $resource = Resource::create([
-            'title'        => $request->title,
-            'description'  => $request->description,
-            'department_id'=> $request->department_id,
-            'course_id'    => $request->course_id,
-            'resourceType' => $request->resourceType,
-            'file_path'    => $path,
-            'file_type'    => strtoupper($file->getClientOriginalExtension()),
-            'file_size'    => round($file->getSize() / 1024 / 1024, 2) . ' MB',
-            'user_id'      => $request->user()->id,
-            'is_approved'  => 0,
-            'status'       => 'pending',
+            'title'         => $request->title,
+            'description'   => $request->description,
+            'department_id' => $request->department_id,
+            'course_id'     => $request->course_id,
+            'resourceType'  => $request->resourceType,
+            'file_path'     => $path,
+            'file_type'     => strtoupper($file->getClientOriginalExtension()),
+            'file_size'     => round($file->getSize() / 1024 / 1024, 2) . ' MB',
+            'user_id'       => $request->user()->id,
+            'is_approved'   => 0,
+            'status'        => 'pending',
         ]);
 
-        // Track activity
         ActivityLog::create([
             'user_id'     => $request->user()->id,
             'action'      => 'upload',
@@ -91,13 +90,36 @@ class ResourceController extends Controller
         ]);
     }
 
+    // DELETE /api/resources/{id}
+    public function destroy($id)
+    {
+        $resource = Resource::findOrFail($id);
+
+        // Only the owner can delete
+        if ((int)$resource->user_id !== (int)auth()->id()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized.'
+            ], 403);
+        }
+
+        // Delete file from storage
+        Storage::disk('public')->delete($resource->file_path);
+
+        $resource->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Resource deleted successfully.'
+        ]);
+    }
+
     // GET /api/download/{id}
     public function download($id)
     {
         $resource = Resource::findOrFail($id);
         $resource->increment('downloads');
 
-        // Track activity
         ActivityLog::create([
             'user_id'     => auth()->id(),
             'action'      => 'download',
@@ -105,13 +127,15 @@ class ResourceController extends Controller
             'details'     => 'Downloaded: ' . $resource->title,
         ]);
 
-        // Award 5 points to the resource owner
-        Reward::create([
-            'user_id'            => $resource->user_id,
-            'points_earned'      => 5,
-            'reward_name'        => 'Download Reward',
-            'reward_description' => 'Someone downloaded your resource: ' . $resource->title,
-        ]);
+        // Give +5 reward to the resource owner when someone downloads
+        if ((int)$resource->user_id !== (int)auth()->id()) {
+            Reward::create([
+                'user_id'            => $resource->user_id,
+                'reward_name'        => 'Resource Downloaded',
+                'reward_description' => 'You earned 5 points because "' . $resource->title . '" was downloaded',
+                'points_earned'      => 5,
+            ]);
+        }
 
         $path = Storage::disk('public')->path($resource->file_path);
         if (!file_exists($path)) {

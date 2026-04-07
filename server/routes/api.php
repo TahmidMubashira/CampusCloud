@@ -21,8 +21,8 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
 
 // Resources (public - only approved resources shown)
-Route::get('/resources',                [ResourceController::class, 'index']);
-Route::get('/departments', [ResourceController::class, 'departments']);
+Route::get('/resources',               [ResourceController::class, 'index']);
+Route::get('/departments',             [ResourceController::class, 'departments']);
 Route::get('/courses/{department_id}', [ResourceController::class, 'courses']);
 
 // Admin login (public)
@@ -34,23 +34,24 @@ Route::post('/admin/login', [AdminController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
 
     // ── User Auth ─────────────────────────────────────────────────────────────
-    Route::post('/logout',  [AuthController::class, 'logout']);
-    Route::get('/me',       [AuthController::class, 'me']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/me',      [AuthController::class, 'me']);
 
     // ── Resources ─────────────────────────────────────────────────────────────
-    Route::post('/resources/upload',    [ResourceController::class, 'store']);
-    Route::get('/download/{id}',        [ResourceController::class, 'download']);
+    Route::post('/resources/upload',  [ResourceController::class, 'store']);
+    Route::delete('/resources/{id}',  [ResourceController::class, 'destroy']); // 👈 new
+    Route::get('/download/{id}',      [ResourceController::class, 'download']);
 
     // ── Rewards ───────────────────────────────────────────────────────────────
-    Route::get('/rewards',              [RewardController::class, 'index']);
-    Route::get('/my-rewards',           [RewardController::class, 'getUserRewards']);
+    Route::get('/rewards',     [RewardController::class, 'index']);
+    Route::get('/my-rewards',  [RewardController::class, 'getUserRewards']);
 
     // ── Admin ─────────────────────────────────────────────────────────────────
-    Route::post('/admin/logout',        [AdminController::class, 'logout']);
-    Route::get('/admin/stats',          [AdminController::class, 'stats']);
-    Route::get('/admin/pending',        [AdminController::class, 'pending']);
-    Route::put('/admin/approve/{id}',   [AdminController::class, 'approve']);
-    Route::put('/admin/reject/{id}',    [AdminController::class, 'reject']);
+    Route::post('/admin/logout',      [AdminController::class, 'logout']);
+    Route::get('/admin/stats',        [AdminController::class, 'stats']);
+    Route::get('/admin/pending',      [AdminController::class, 'pending']);
+    Route::put('/admin/approve/{id}', [AdminController::class, 'approve']);
+    Route::put('/admin/reject/{id}',  [AdminController::class, 'reject']);
 
     // ── Profile ───────────────────────────────────────────────────────────────
     Route::get('/profile/stats', [ProfileController::class, 'stats']);
