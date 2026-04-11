@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import Layout from './Layout';
 
 interface UploadItem {
   id: number;
@@ -22,74 +22,13 @@ interface ProfileStats {
   rejectedUploads: UploadItem[];
 }
 
-const NAV_ITEMS = [
-  { label: 'Home',         to: '/',          icon: '🏠' },
-  { label: 'Resources',    to: '/resources', icon: '📄' },
-  { label: 'Upload',       to: '/upload',    icon: '⬆️' },
-  { label: 'Rewards',      to: '/rewards',   icon: '🏅' },
-  { label: 'Profile',      to: '/profile',   icon: '👤' },
-  { label: 'AI Assistant', to: '/assistant', icon: '🤖' },
-];
-
-function Sidebar({ name, email }: { name: string; email: string }) {
-  const initials = name
-    ? name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-    : 'SU';
-
-  return (
-    <aside style={{
-      width: '220px', minHeight: '100vh', background: '#d7e3ec',
-      display: 'flex', flexDirection: 'column', padding: '24px 0', flexShrink: 0,
-    }}>
-      <div style={{ padding: '0 20px 24px' }}>
-        <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#1a3a50' }}>CampusCloud</div>
-        <div style={{ fontSize: '0.7rem', color: '#6a8fa8' }}>Resource Sharing</div>
-      </div>
-      <div style={{ borderTop: '1px solid #b8cdd9', marginBottom: '16px' }} />
-      <nav style={{ flex: 1, padding: '0 12px' }}>
-        {NAV_ITEMS.map(item => {
-          const isActive = item.label === 'Profile';
-          return (
-            <Link key={item.label} to={item.to} style={{
-              display: 'flex', alignItems: 'center', gap: '10px',
-              padding: '10px 12px', borderRadius: '8px', marginBottom: '4px',
-              textDecoration: 'none', fontSize: '0.875rem',
-              fontWeight: isActive ? 600 : 400,
-              color: isActive ? '#1a3a50' : '#4a6a80',
-              background: isActive ? '#b8cdd9' : 'transparent',
-              transition: 'background 0.15s',
-            }}>
-              <span style={{ fontSize: '0.95rem' }}>{item.icon}</span>
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-      <div style={{
-        margin: '0 12px', borderTop: '1px solid #b8cdd9',
-        paddingTop: '16px', display: 'flex', alignItems: 'center', gap: '10px',
-      }}>
-        <div style={{
-          width: '36px', height: '36px', borderRadius: '50%', background: '#8aafc5',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'white', fontWeight: 700, fontSize: '0.85rem',
-        }}>{initials}</div>
-        <div>
-          <div style={{ fontWeight: 600, fontSize: '0.8rem', color: '#1a3a50' }}>{name || 'Student User'}</div>
-          <div style={{ fontSize: '0.68rem', color: '#6a8fa8' }}>{email || ''}</div>
-        </div>
-      </div>
-    </aside>
-  );
-}
-
 function StatCard({ label, value, sub, icon }: {
   label: string; value: string | number; sub: string; icon: string;
 }) {
   return (
     <div style={{
       background: '#fff', borderRadius: '10px', padding: '18px 20px',
-      flex: 1, border: '1px solid #dce8f0',
+      flex: 1, border: '1px solid #dce8f0', minWidth: '130px',
       display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
     }}>
       <div>
@@ -136,6 +75,7 @@ function UploadRow({ item, badge, onDelete }: {
       display: 'flex', alignItems: 'center', gap: '14px',
       padding: '14px 16px', background: '#f5f9fc',
       borderRadius: '8px', marginBottom: '10px', border: '1px solid #e4eef5',
+      flexWrap: 'wrap',
     }}>
       <div style={{
         width: '34px', height: '38px', flexShrink: 0,
@@ -144,14 +84,14 @@ function UploadRow({ item, badge, onDelete }: {
         justifyContent: 'center', fontSize: '1rem',
       }}>📄</div>
 
-      <div style={{ flex: 1 }}>
+      <div style={{ flex: 1, minWidth: '120px' }}>
         <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#1a3a50' }}>
           {item.title}
         </div>
         <div style={{ fontSize: '0.72rem', color: '#7a9db5' }}>
           {item.department} • {item.courseCode}
         </div>
-        <div style={{ display: 'flex', gap: '14px', marginTop: '4px' }}>
+        <div style={{ display: 'flex', gap: '14px', marginTop: '4px', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.68rem', color: '#9ab5c5' }}>🕐 {item.timeAgo}</span>
           {item.downloads !== undefined && (
             <span style={{ fontSize: '0.68rem', color: '#9ab5c5' }}>⬇️ {item.downloads} downloads</span>
@@ -280,96 +220,93 @@ export default function StudentProfile() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', minHeight: '100vh', background: '#f0f4f8' }}>
-        <Sidebar name="" email="" />
-        <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Layout active="Profile">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
           <div style={{ color: '#7a9db5', fontSize: '0.9rem' }}>Loading profile...</div>
-        </main>
-      </div>
+        </div>
+      </Layout>
     );
   }
 
   if (error || !stats) {
     return (
-      <div style={{ display: 'flex', minHeight: '100vh', background: '#f0f4f8' }}>
-        <Sidebar name="" email="" />
-        <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Layout active="Profile">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
           <div style={{ color: '#e07a7a', fontSize: '0.9rem' }}>⚠️ {error || 'Could not load profile.'}</div>
-        </main>
-      </div>
+        </div>
+      </Layout>
     );
   }
 
   const displayedApproved = showAllApproved ? stats.allApproved : stats.recentUploads;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f0f4f8' }}>
-      <Sidebar name={stats.user.name} email={stats.user.email} />
+    <Layout active="Profile" userName={stats.user.name} userEmail={stats.user.email}>
+      <style>{`
+        .profile-stats-row { display: flex; gap: 16px; flex-wrap: wrap; }
+        .profile-stats-row > * { flex: 1; min-width: 130px; }
+      `}</style>
 
-      <main style={{ flex: 1, padding: '36px 40px', overflowY: 'auto' }}>
+      <div style={{ marginBottom: '28px' }}>
+        <h1 style={{ fontWeight: 700, fontSize: '1.6rem', color: '#1a3a50', margin: 0 }}>
+          Welcome back, {stats.user.name} 👋
+        </h1>
+        <p style={{ color: '#7a9db5', fontSize: '0.85rem', margin: '4px 0 0' }}>
+          Here is an overview of your academic contribution
+        </p>
+      </div>
 
-        <div style={{ marginBottom: '28px' }}>
-          <h1 style={{ fontWeight: 700, fontSize: '1.6rem', color: '#1a3a50', margin: 0 }}>
-            Welcome back, {stats.user.name} 👋
-          </h1>
-          <p style={{ color: '#7a9db5', fontSize: '0.85rem', margin: '4px 0 0' }}>
-            Here is an overview of your academic contribution
-          </p>
-        </div>
+      <div className="profile-stats-row" style={{ marginBottom: '28px' }}>
+        <StatCard label="Total Contribution Points" value={stats.totalPoints} sub="Keep sharing to earn more!" icon="🏅" />
+        <StatCard label="Resources Uploaded" value={stats.totalUploads} sub="Total files shared" icon="📄" />
+        <StatCard label="Total Downloads" value={stats.totalDownloads} sub="Your impact on peers" icon="⬇️" />
+      </div>
 
-        <div style={{ display: 'flex', gap: '16px', marginBottom: '28px' }}>
-          <StatCard label="Total Contribution Points" value={stats.totalPoints} sub="Keep sharing to earn more!" icon="🏅" />
-          <StatCard label="Resources Uploaded" value={stats.totalUploads} sub="Total files shared" icon="📄" />
-          <StatCard label="Total Downloads" value={stats.totalDownloads} sub="Your impact on peers" icon="⬇️" />
-        </div>
+      <SectionCard
+        title="Your Uploads"
+        action={
+          stats.allApproved.length > 3 ? (
+            <button
+              onClick={() => setShowAllApproved(prev => !prev)}
+              style={{
+                fontSize: '0.78rem', color: '#4a90b8',
+                background: 'none', border: 'none',
+                cursor: 'pointer', fontWeight: 500,
+              }}
+            >
+              {showAllApproved ? 'Show Less' : `View All (${stats.allApproved.length})`}
+            </button>
+          ) : undefined
+        }
+      >
+        {displayedApproved.length === 0 ? (
+          <EmptyState message="No approved uploads yet. Upload a resource and wait for admin approval!" />
+        ) : (
+          displayedApproved.map(item => (
+            <UploadRow key={item.id} item={item} onDelete={handleDelete} />
+          ))
+        )}
+      </SectionCard>
 
-        <SectionCard
-          title="Your Uploads"
-          action={
-            stats.allApproved.length > 3 ? (
-              <button
-                onClick={() => setShowAllApproved(prev => !prev)}
-                style={{
-                  fontSize: '0.78rem', color: '#4a90b8',
-                  background: 'none', border: 'none',
-                  cursor: 'pointer', fontWeight: 500,
-                }}
-              >
-                {showAllApproved ? 'Show Less' : `View All (${stats.allApproved.length})`}
-              </button>
-            ) : undefined
-          }
-        >
-          {displayedApproved.length === 0 ? (
-            <EmptyState message="No approved uploads yet. Upload a resource and wait for admin approval!" />
-          ) : (
-            displayedApproved.map(item => (
-              <UploadRow key={item.id} item={item} onDelete={handleDelete} />
-            ))
-          )}
-        </SectionCard>
+      <SectionCard title={`Pending Approval (${stats.pendingUploads.length})`}>
+        {stats.pendingUploads.length === 0 ? (
+          <EmptyState message="No pending uploads." />
+        ) : (
+          stats.pendingUploads.map(item => (
+            <UploadRow key={item.id} item={item} badge="pending" onDelete={handleDelete} />
+          ))
+        )}
+      </SectionCard>
 
-        <SectionCard title={`Pending Approval (${stats.pendingUploads.length})`}>
-          {stats.pendingUploads.length === 0 ? (
-            <EmptyState message="No pending uploads." />
-          ) : (
-            stats.pendingUploads.map(item => (
-              <UploadRow key={item.id} item={item} badge="pending" onDelete={handleDelete} />
-            ))
-          )}
-        </SectionCard>
-
-        <SectionCard title={`Rejected (${stats.rejectedUploads.length})`}>
-          {stats.rejectedUploads.length === 0 ? (
-            <EmptyState message="No rejected uploads." />
-          ) : (
-            stats.rejectedUploads.map(item => (
-              <UploadRow key={item.id} item={item} badge="rejected" onDelete={handleDelete} />
-            ))
-          )}
-        </SectionCard>
-
-      </main>
-    </div>
+      <SectionCard title={`Rejected (${stats.rejectedUploads.length})`}>
+        {stats.rejectedUploads.length === 0 ? (
+          <EmptyState message="No rejected uploads." />
+        ) : (
+          stats.rejectedUploads.map(item => (
+            <UploadRow key={item.id} item={item} badge="rejected" onDelete={handleDelete} />
+          ))
+        )}
+      </SectionCard>
+    </Layout>
   );
 }

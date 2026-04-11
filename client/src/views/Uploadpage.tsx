@@ -1,15 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-
-const NAV_ITEMS = [
-  { label: 'Home',         to: '/',          icon: '🏠' },
-  { label: 'Resources',    to: '/resources', icon: '📄' },
-  { label: 'Upload',       to: '/upload',    icon: '⬆️' },
-  { label: 'Rewards',      to: '/rewards',   icon: '🏅' },
-  { label: 'Profile',      to: '/profile',   icon: '👤' },
-  { label: 'AI Assistant', to: '/assistant', icon: '🤖' },
-];
+import Layout from './Layout';
 
 const RESOURCE_TYPES = [
   'Lecture Notes', 'Past Papers', 'Assignments',
@@ -25,56 +17,6 @@ interface Course {
   course_id: number;
   course_name: string;
   course_code: string;
-}
-
-function Sidebar({ active }: { active: string }) {
-  return (
-    <aside style={{
-      width: '220px',
-      minHeight: '100vh',
-      background: '#d7e3ec',
-      display: 'flex',
-      flexDirection: 'column',
-      padding: '24px 0',
-      flexShrink: 0,
-    }}>
-      <Link to="/" style={{ textDecoration: 'none', padding: '0 20px 24px' }}>
-        <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#1a3a50' }}>CampusCloud</div>
-        <div style={{ fontSize: '0.7rem', color: '#6a8fa8' }}>Resource Sharing</div>
-      </Link>
-
-      <div style={{ borderTop: '1px solid #b8cdd9', marginBottom: '16px' }} />
-
-      <nav style={{ flex: 1, padding: '0 12px' }}>
-        {NAV_ITEMS.map(item => {
-          const isActive = active === item.label;
-          return (
-            <Link
-              key={item.label}
-              to={item.to}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '10px 12px',
-                borderRadius: '8px',
-                marginBottom: '4px',
-                textDecoration: 'none',
-                fontSize: '0.875rem',
-                fontWeight: isActive ? 600 : 400,
-                color: isActive ? '#1a3a50' : '#4a6a80',
-                background: isActive ? '#b8cdd9' : 'transparent',
-                transition: 'background 0.15s',
-              }}
-            >
-              <span style={{ fontSize: '0.95rem' }}>{item.icon}</span>
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-    </aside>
-  );
 }
 
 function HeroIllustration() {
@@ -163,9 +105,19 @@ export default function UploadPage() {
 
   useEffect(() => {
     fetch('/api/departments')
-      .then(r => r.json())
-      .then(data => setDepartments(Array.isArray(data) ? data : []))
-      .catch(() => toast.error('Failed to load departments'));
+      .then(r => {
+        console.log('status:', r.status);
+        console.log('ok:', r.ok);
+        return r.json();
+      })
+      .then(data => {
+        console.log('departments raw response:', data);
+        setDepartments(Array.isArray(data) ? data : []);
+      })
+      .catch(err => {
+        console.error('fetch error:', err);
+        toast.error('Failed to load departments');
+      });
   }, []);
 
   useEffect(() => {
@@ -231,287 +183,294 @@ export default function UploadPage() {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f0f4f8', fontFamily: "'Nunito', sans-serif" }}>
+    <Layout active="Upload">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Lora:wght@400;600;700&display=swap');
         .up-input:focus { border-color: #2e7da8 !important; box-shadow: 0 0 0 3px rgba(46,125,168,0.09) !important; }
         .up-input::placeholder { color: #a0bece !important; }
         .up-select:focus { border-color: #2e7da8 !important; outline: none !important; }
+        .upload-dropdowns-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+        @media (max-width: 768px) { .upload-dropdowns-grid { grid-template-columns: 1fr; } }
       `}</style>
 
-      <Sidebar active="Upload" />
+      {/* Hero Banner */}
+      <div style={{
+        background: 'linear-gradient(135deg, #d4e8f4 0%, #e2f0f8 50%, #cce0ee 100%)',
+        borderRadius: '14px',
+        padding: '28px 36px',
+        marginBottom: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '28px',
+        border: '1px solid #b8d4e4',
+        flexWrap: 'wrap',
+      }}>
+        <div style={{ flexShrink: 0 }}>
+          <HeroIllustration />
+        </div>
+        <div>
+          <h1 style={{
+            fontWeight: 700, fontSize: '1.5rem', color: '#1a3a50',
+            margin: '0 0 6px', fontFamily: "'Lora', serif",
+          }}>
+            Upload Resource
+          </h1>
+          <p style={{ color: '#5a8aa8', fontSize: '0.85rem', margin: 0 }}>
+            Share your academic materials with fellow students and earn contribution points
+          </p>
+        </div>
+      </div>
 
-      <main style={{ flex: 1, padding: '36px 40px', overflowY: 'auto' }}>
+      {/* Form Card */}
+      <div style={{
+        background: '#fff',
+        borderRadius: '14px',
+        padding: '28px 32px',
+        border: '1px solid #dce8f0',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+      }}>
 
+        {/* Upload Guidelines */}
         <div style={{
-          background: 'linear-gradient(135deg, #d4e8f4 0%, #e2f0f8 50%, #cce0ee 100%)',
-          borderRadius: '14px',
-          padding: '28px 36px',
+          background: '#f0f7fc',
+          borderRadius: '10px',
+          padding: '14px 18px',
           marginBottom: '24px',
+          border: '1px solid #d4e8f4',
           display: 'flex',
-          alignItems: 'center',
-          gap: '28px',
-          border: '1px solid #b8d4e4',
+          gap: '12px',
+          alignItems: 'flex-start',
         }}>
-          <div style={{ flexShrink: 0 }}>
-            <HeroIllustration />
-          </div>
+          <span style={{ fontSize: '1.1rem', flexShrink: 0, marginTop: '1px' }}>📋</span>
           <div>
-            <h1 style={{
-              fontWeight: 700, fontSize: '1.5rem', color: '#1a3a50',
-              margin: '0 0 6px', fontFamily: "'Lora', serif",
-            }}>
-              Upload Resource
-            </h1>
-            <p style={{ color: '#5a8aa8', fontSize: '0.85rem', margin: 0 }}>
-              Share your academic materials with fellow students and earn contribution points
-            </p>
+            <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1a3a50', marginBottom: '6px' }}>
+              Upload Guidelines
+            </div>
+            {[
+              'Ensure your resource is accurate and helpful to other students',
+              'Only upload materials you have right to share',
+              'Use clear, descriptive titles and provide helpful descriptions',
+            ].map((tip, i) => (
+              <div key={i} style={{ display: 'flex', gap: '6px', fontSize: '0.78rem', color: '#4a6a80', marginBottom: '3px' }}>
+                <span>•</span><span>{tip}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div style={{
-          background: '#fff',
-          borderRadius: '14px',
-          padding: '28px 32px',
-          border: '1px solid #dce8f0',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-        }}>
+        <form onSubmit={handleSubmit}>
 
-          <div style={{
-            background: '#f0f7fc',
-            borderRadius: '10px',
-            padding: '14px 18px',
-            marginBottom: '24px',
-            border: '1px solid #d4e8f4',
-            display: 'flex',
-            gap: '12px',
-            alignItems: 'flex-start',
-          }}>
-            <span style={{ fontSize: '1.1rem', flexShrink: 0, marginTop: '1px' }}>📋</span>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1a3a50', marginBottom: '6px' }}>
-                Upload Guidelines
-              </div>
-              {[
-                'Ensure your resource is accurate and helpful to other students',
-                'Only upload materials you have right to share',
-                'Use clear, descriptive titles and provide helpful descriptions',
-              ].map((tip, i) => (
-                <div key={i} style={{ display: 'flex', gap: '6px', fontSize: '0.78rem', color: '#4a6a80', marginBottom: '3px' }}>
-                  <span>•</span><span>{tip}</span>
-                </div>
-              ))}
-            </div>
+          {/* Resource Title */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={labelStyle}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+              Resource Title <span style={{ color: '#e05a3a' }}>*</span>
+            </label>
+            <input
+              className="up-input"
+              name="title"
+              type="text"
+              placeholder="e.g. Data Structure class notes"
+              value={formData.title}
+              onChange={handleChange}
+              style={inputStyle}
+            />
           </div>
 
-          <form onSubmit={handleSubmit}>
+          {/* Description */}
+          <div style={{ marginBottom: '20px' }}>
+            <label style={labelStyle}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
+                <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" />
+                <line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
+              </svg>
+              Description
+            </label>
+            <textarea
+              className="up-input"
+              name="description"
+              rows={3}
+              placeholder="Provide a brief description to help students understand what's included in this resource"
+              value={formData.description}
+              onChange={handleChange}
+              style={{ ...inputStyle, resize: 'vertical', minHeight: '75px' }}
+            />
+          </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={labelStyle}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                </svg>
-                Resource Title <span style={{ color: '#e05a3a' }}>*</span>
-              </label>
-              <input
-                className="up-input"
-                name="title"
-                type="text"
-                placeholder="e.g. Data Structure class notes"
-                value={formData.title}
-                onChange={handleChange}
-                style={inputStyle}
-              />
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={labelStyle}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
-                  <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" />
-                  <line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" />
-                  <line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
-                </svg>
-                Description
-              </label>
-              <textarea
-                className="up-input"
-                name="description"
-                rows={3}
-                placeholder="Provide a brief description to help students understand what's included in this resource"
-                value={formData.description}
-                onChange={handleChange}
-                style={{ ...inputStyle, resize: 'vertical', minHeight: '75px' }}
-              />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '20px' }}>
-              <div>
-                <label style={labelStyle}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                    <polyline points="9 22 9 12 15 12 15 22" />
-                  </svg>
-                  Department <span style={{ color: '#e05a3a' }}>*</span>
-                </label>
-                <select className="up-select" name="department_id" value={formData.department_id} onChange={handleChange} style={selectStyle}>
-                  <option value="">Select Department</option>
-                  {departments.map(d => (
-                    <option key={d.department_id} value={d.department_id}>{d.department_name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label style={labelStyle}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
-                    <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" />
-                  </svg>
-                  Course Code <span style={{ color: '#e05a3a' }}>*</span>
-                </label>
-                <select
-                  className="up-select"
-                  name="course_id"
-                  value={formData.course_id}
-                  onChange={handleChange}
-                  disabled={!formData.department_id}
-                  style={!formData.department_id ? disabledSelectStyle : selectStyle}
-                >
-                  <option value="">{formData.department_id ? 'Select Course Code' : 'Select Department first'}</option>
-                  {courses.map(c => (
-                    <option key={c.course_id} value={c.course_id}>{c.course_code}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label style={labelStyle}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
-                  </svg>
-                  Resource Type <span style={{ color: '#e05a3a' }}>*</span>
-                </label>
-                <select className="up-select" name="resourceType" value={formData.resourceType} onChange={handleChange} style={selectStyle}>
-                  <option value="">Select Resource Type</option>
-                  {RESOURCE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '28px' }}>
+          {/* Department + Course Code + Resource Type */}
+          <div className="upload-dropdowns-grid">
+            <div>
               <label style={labelStyle}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
                 </svg>
-                Upload File <span style={{ color: '#e05a3a' }}>*</span>
+                Department <span style={{ color: '#e05a3a' }}>*</span>
               </label>
-              <div
-                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={handleDrop}
-                onClick={() => document.getElementById('fileInput')?.click()}
-                style={{
-                  border: `2px dashed ${dragOver ? '#2e7da8' : formData.file ? '#4aaa7a' : '#b8d4e4'}`,
-                  borderRadius: '10px',
-                  padding: '32px 20px',
-                  textAlign: 'center',
-                  background: dragOver ? '#edf5fa' : formData.file ? '#edf7f2' : '#f8fbfe',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
-              >
-                <input
-                  id="fileInput"
-                  type="file"
-                  style={{ display: 'none' }}
-                  onChange={e => handleFile(e.target.files?.[0] ?? null)}
-                  accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.xlsx"
-                />
-                <div style={{
-                  width: '42px', height: '42px', borderRadius: '50%',
-                  background: '#d4e8f4',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  marginBottom: '4px',
-                }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2e7da8" strokeWidth="2">
-                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-                  </svg>
-                </div>
-                {formData.file ? (
-                  <>
-                    <div style={{ fontWeight: 700, color: '#2a8a5a', fontSize: '0.88rem' }}>{formData.file.name}</div>
-                    <div style={{ fontSize: '0.74rem', color: '#7a9db5' }}>
-                      {(formData.file.size / 1024 / 1024).toFixed(2)} MB · Click to change file
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div style={{ fontWeight: 600, color: '#4a6a80', fontSize: '0.88rem' }}>
-                      Drop your file here or click to browse
-                    </div>
-                    <div style={{ fontSize: '0.74rem', color: '#9ab5c5' }}>Maximum file size: 50 MB</div>
-                    <div style={{ fontSize: '0.72rem', color: '#9ab5c5' }}>
-                      Supported formats: PDF, DOC, DOCX, PPT, PPTX, ZIP
-                    </div>
-                  </>
-                )}
-              </div>
+              <select className="up-select" name="department_id" value={formData.department_id} onChange={handleChange} style={selectStyle}>
+                <option value="">Select Department</option>
+                {departments.map(d => (
+                  <option key={d.department_id} value={d.department_id}>{d.department_name}</option>
+                ))}
+              </select>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <Link
-                to="/resources"
-                style={{
-                  padding: '10px 28px',
-                  borderRadius: '8px',
-                  border: '1.5px solid #dce8f0',
-                  background: '#fff',
-                  color: '#4a6a80',
-                  fontSize: '0.88rem',
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                }}
-              >
-                Cancel
-              </Link>
-              <button
-                type="submit"
-                disabled={loading}
-                style={{
-                  padding: '10px 28px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: loading ? '#7ab0cc' : '#1a3a50',
-                  color: '#fff',
-                  fontSize: '0.88rem',
-                  fontWeight: 700,
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  fontFamily: "'Nunito', sans-serif",
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  transition: 'background 0.2s',
-                }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+            <div>
+              <label style={labelStyle}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" />
                 </svg>
-                {loading ? 'Uploading...' : 'Upload Resource'}
-              </button>
+                Course Code <span style={{ color: '#e05a3a' }}>*</span>
+              </label>
+              <select
+                className="up-select"
+                name="course_id"
+                value={formData.course_id}
+                onChange={handleChange}
+                disabled={!formData.department_id}
+                style={!formData.department_id ? disabledSelectStyle : selectStyle}
+              >
+                <option value="">
+                  {formData.department_id ? 'Select Course Code' : 'Select Department first'}
+                </option>
+                {courses.map(c => (
+                  <option key={c.course_id} value={c.course_id}>{c.course_code}</option>
+                ))}
+              </select>
             </div>
-          </form>
-        </div>
-      </main>
-    </div>
+
+            <div>
+              <label style={labelStyle}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
+                Resource Type <span style={{ color: '#e05a3a' }}>*</span>
+              </label>
+              <select className="up-select" name="resourceType" value={formData.resourceType} onChange={handleChange} style={selectStyle}>
+                <option value="">Select Resource Type</option>
+                {RESOURCE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Upload File */}
+          <div style={{ marginBottom: '28px' }}>
+            <label style={labelStyle}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              Upload File <span style={{ color: '#e05a3a' }}>*</span>
+            </label>
+            <div
+              onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+              onClick={() => document.getElementById('fileInput')?.click()}
+              style={{
+                border: `2px dashed ${dragOver ? '#2e7da8' : formData.file ? '#4aaa7a' : '#b8d4e4'}`,
+                borderRadius: '10px',
+                padding: '32px 20px',
+                textAlign: 'center',
+                background: dragOver ? '#edf5fa' : formData.file ? '#edf7f2' : '#f8fbfe',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <input
+                id="fileInput"
+                type="file"
+                style={{ display: 'none' }}
+                onChange={e => handleFile(e.target.files?.[0] ?? null)}
+                accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.xlsx"
+              />
+              <div style={{
+                width: '42px', height: '42px', borderRadius: '50%',
+                background: '#d4e8f4',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                marginBottom: '4px',
+              }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2e7da8" strokeWidth="2">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                </svg>
+              </div>
+              {formData.file ? (
+                <>
+                  <div style={{ fontWeight: 700, color: '#2a8a5a', fontSize: '0.88rem' }}>{formData.file.name}</div>
+                  <div style={{ fontSize: '0.74rem', color: '#7a9db5' }}>
+                    {(formData.file.size / 1024 / 1024).toFixed(2)} MB · Click to change file
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontWeight: 600, color: '#4a6a80', fontSize: '0.88rem' }}>
+                    Drop your file here or click to browse
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#9ab5c5' }}>Maximum file size: 50 MB</div>
+                  <div style={{ fontSize: '0.72rem', color: '#9ab5c5' }}>
+                    Supported formats: PDF, DOC, DOCX, PPT, PPTX, ZIP
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+            <Link
+              to="/resources"
+              style={{
+                padding: '10px 28px',
+                borderRadius: '8px',
+                border: '1.5px solid #dce8f0',
+                background: '#fff',
+                color: '#4a6a80',
+                fontSize: '0.88rem',
+                fontWeight: 600,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+              }}
+            >
+              Cancel
+            </Link>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                padding: '10px 28px',
+                borderRadius: '8px',
+                border: 'none',
+                background: loading ? '#7ab0cc' : '#1a3a50',
+                color: '#fff',
+                fontSize: '0.88rem',
+                fontWeight: 700,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                fontFamily: "'Nunito', sans-serif",
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'background 0.2s',
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              {loading ? 'Uploading...' : 'Upload Resource'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </Layout>
   );
 }
