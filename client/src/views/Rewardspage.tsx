@@ -3,11 +3,12 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 
 const NAV_ITEMS = [
-  { label: 'Home', to: '/', icon: '🏠' },
-  { label: 'Resources', to: '/resources', icon: '📄' },
-  { label: 'Upload', to: '/upload', icon: '⬆️' },
-  { label: 'Rewards', to: '/rewards', icon: '🏅' },
-  { label: 'Profile', to: '/profile', icon: '👤' },
+  { label: 'Home',         to: '/',          icon: '🏠' },
+  { label: 'Resources',    to: '/resources', icon: '📄' },
+  { label: 'Upload',       to: '/upload',    icon: '⬆️' },
+  { label: 'Rewards',      to: '/rewards',   icon: '🏅' },
+  { label: 'Profile',      to: '/profile',   icon: '👤' },
+  { label: 'AI Assistant', to: '/assistant', icon: '🤖' },
 ];
 
 function Sidebar({ active }: { active: string }) {
@@ -102,7 +103,6 @@ export default function RewardsPage() {
       });
       
       setRewards(response.data);
-      // Fix: Ensure points are treated as numbers
       const points = response.data.reduce((sum: number, reward: any) => sum + Number(reward.points_earned), 0);
       setTotalPoints(points);
       setLoading(false);

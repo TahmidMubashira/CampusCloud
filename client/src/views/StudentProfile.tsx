@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
 interface UploadItem {
   id: number;
   title: string;
@@ -24,14 +23,14 @@ interface ProfileStats {
 }
 
 const NAV_ITEMS = [
-  { label: 'Home',      to: '/',          icon: '🏠' },
-  { label: 'Resources', to: '/resources', icon: '📄' },
-  { label: 'Upload',    to: '/upload',    icon: '⬆️' },
-  { label: 'Rewards',   to: '/rewards',   icon: '🏅' },
-  { label: 'Profile',   to: '/profile',   icon: '👤' },
+  { label: 'Home',         to: '/',          icon: '🏠' },
+  { label: 'Resources',    to: '/resources', icon: '📄' },
+  { label: 'Upload',       to: '/upload',    icon: '⬆️' },
+  { label: 'Rewards',      to: '/rewards',   icon: '🏅' },
+  { label: 'Profile',      to: '/profile',   icon: '👤' },
+  { label: 'AI Assistant', to: '/assistant', icon: '🤖' },
 ];
 
-// ── Sidebar ───────────────────────────────────────────────────────────────────
 function Sidebar({ name, email }: { name: string; email: string }) {
   const initials = name
     ? name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
@@ -84,7 +83,6 @@ function Sidebar({ name, email }: { name: string; email: string }) {
   );
 }
 
-// ── Stat Card ─────────────────────────────────────────────────────────────────
 function StatCard({ label, value, sub, icon }: {
   label: string; value: string | number; sub: string; icon: string;
 }) {
@@ -104,7 +102,6 @@ function StatCard({ label, value, sub, icon }: {
   );
 }
 
-// ── Upload Row ────────────────────────────────────────────────────────────────
 function UploadRow({ item, badge, onDelete }: {
   item: UploadItem;
   badge?: 'pending' | 'rejected';
@@ -203,7 +200,6 @@ function UploadRow({ item, badge, onDelete }: {
   );
 }
 
-// ── Section Card ──────────────────────────────────────────────────────────────
 function SectionCard({ title, action, children }: {
   title: string;
   action?: React.ReactNode;
@@ -228,7 +224,6 @@ function SectionCard({ title, action, children }: {
   );
 }
 
-// ── Empty State ───────────────────────────────────────────────────────────────
 function EmptyState({ message }: { message: string }) {
   return (
     <div style={{
@@ -240,7 +235,6 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
 export default function StudentProfile() {
   const [stats, setStats] = useState<ProfileStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -270,7 +264,6 @@ export default function StudentProfile() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Remove deleted resource from all lists instantly
   const handleDelete = (id: number) => {
     setStats(prev => {
       if (!prev) return prev;
@@ -315,7 +308,6 @@ export default function StudentProfile() {
 
       <main style={{ flex: 1, padding: '36px 40px', overflowY: 'auto' }}>
 
-        {/* Header */}
         <div style={{ marginBottom: '28px' }}>
           <h1 style={{ fontWeight: 700, fontSize: '1.6rem', color: '#1a3a50', margin: 0 }}>
             Welcome back, {stats.user.name} 👋
@@ -325,29 +317,12 @@ export default function StudentProfile() {
           </p>
         </div>
 
-        {/* Stats Row */}
         <div style={{ display: 'flex', gap: '16px', marginBottom: '28px' }}>
-          <StatCard
-            label="Total Contribution Points"
-            value={stats.totalPoints}
-            sub="Keep sharing to earn more!"
-            icon="🏅"
-          />
-          <StatCard
-            label="Resources Uploaded"
-            value={stats.totalUploads}
-            sub="Total files shared"
-            icon="📄"
-          />
-          <StatCard
-            label="Total Downloads"
-            value={stats.totalDownloads}
-            sub="Your impact on peers"
-            icon="⬇️"
-          />
+          <StatCard label="Total Contribution Points" value={stats.totalPoints} sub="Keep sharing to earn more!" icon="🏅" />
+          <StatCard label="Resources Uploaded" value={stats.totalUploads} sub="Total files shared" icon="📄" />
+          <StatCard label="Total Downloads" value={stats.totalDownloads} sub="Your impact on peers" icon="⬇️" />
         </div>
 
-        {/* Approved Uploads */}
         <SectionCard
           title="Your Uploads"
           action={
@@ -369,43 +344,27 @@ export default function StudentProfile() {
             <EmptyState message="No approved uploads yet. Upload a resource and wait for admin approval!" />
           ) : (
             displayedApproved.map(item => (
-              <UploadRow
-                key={item.id}
-                item={item}
-                onDelete={handleDelete}
-              />
+              <UploadRow key={item.id} item={item} onDelete={handleDelete} />
             ))
           )}
         </SectionCard>
 
-        {/* Pending Uploads */}
         <SectionCard title={`Pending Approval (${stats.pendingUploads.length})`}>
           {stats.pendingUploads.length === 0 ? (
             <EmptyState message="No pending uploads." />
           ) : (
             stats.pendingUploads.map(item => (
-              <UploadRow
-                key={item.id}
-                item={item}
-                badge="pending"
-                onDelete={handleDelete}
-              />
+              <UploadRow key={item.id} item={item} badge="pending" onDelete={handleDelete} />
             ))
           )}
         </SectionCard>
 
-        {/* Rejected Uploads */}
         <SectionCard title={`Rejected (${stats.rejectedUploads.length})`}>
           {stats.rejectedUploads.length === 0 ? (
             <EmptyState message="No rejected uploads." />
           ) : (
             stats.rejectedUploads.map(item => (
-              <UploadRow
-                key={item.id}
-                item={item}
-                badge="rejected"
-                onDelete={handleDelete}
-              />
+              <UploadRow key={item.id} item={item} badge="rejected" onDelete={handleDelete} />
             ))
           )}
         </SectionCard>

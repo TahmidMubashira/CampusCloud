@@ -6,6 +6,7 @@ import ResourcesPage from './views/ResourcesPage';
 import { LoginPage, RegisterPage, AdminLoginPage } from './views/Auth';
 import RewardsPage from './views/Rewardspage';
 import UploadPage from './views/Uploadpage';
+import AiAssistant from './views/AiAssistant';
 import ProtectedRoute from './helpers/ProtectedRoute';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
@@ -30,9 +31,9 @@ function App() {
 
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route path="/admin" element={
-         <ProtectedRoute>
-           <AdminPage />
-         </ProtectedRoute>
+          <ProtectedRoute>
+            <AdminPage />
+          </ProtectedRoute>
         } />
 
         <Route path="/upload" element={
@@ -40,19 +41,23 @@ function App() {
             <UploadPage />
           </ProtectedRoute>
         } />
+
         <Route path="/rewards" element={
           <ProtectedRoute>
             <RewardsPage />
           </ProtectedRoute>
         } />
+
         <Route path="/profile" element={
           <ProtectedRoute>
             <StudentProfile />
           </ProtectedRoute>
         } />
-        <Route path="/admin" element={
+
+        {/* AI Assistant route */}
+        <Route path="/assistant" element={
           <ProtectedRoute>
-            <AdminPage />
+            <AiAssistant />
           </ProtectedRoute>
         } />
 
