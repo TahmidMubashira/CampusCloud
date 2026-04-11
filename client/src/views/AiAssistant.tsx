@@ -1,52 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-
-const NAV_ITEMS = [
-  { label: 'Home',         to: '/',          icon: '🏠' },
-  { label: 'Resources',    to: '/resources', icon: '📄' },
-  { label: 'Upload',       to: '/upload',    icon: '⬆️' },
-  { label: 'Rewards',      to: '/rewards',   icon: '🏅' },
-  { label: 'Profile',      to: '/profile',   icon: '👤' },
-  { label: 'AI Assistant', to: '/assistant', icon: '🤖' },
-];
+import Layout from './Layout';
 
 interface Message {
   role: 'user' | 'assistant';
   text: string;
-}
-
-function Sidebar({ active }: { active: string }) {
-  return (
-    <aside style={{
-      width: '220px', minHeight: '100vh', background: '#d7e3ec',
-      display: 'flex', flexDirection: 'column', padding: '24px 0', flexShrink: 0,
-    }}>
-      <div style={{ padding: '0 20px 24px' }}>
-        <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#1a3a50' }}>CampusCloud</div>
-        <div style={{ fontSize: '0.7rem', color: '#6a8fa8' }}>Resource Sharing</div>
-      </div>
-      <div style={{ borderTop: '1px solid #b8cdd9', marginBottom: '16px' }} />
-      <nav style={{ flex: 1, padding: '0 12px' }}>
-        {NAV_ITEMS.map(item => {
-          const isActive = active === item.label;
-          return (
-            <Link key={item.label} to={item.to} style={{
-              display: 'flex', alignItems: 'center', gap: '10px',
-              padding: '10px 12px', borderRadius: '8px', marginBottom: '4px',
-              textDecoration: 'none', fontSize: '0.875rem',
-              fontWeight: isActive ? 600 : 400,
-              color: isActive ? '#1a3a50' : '#4a6a80',
-              background: isActive ? '#b8cdd9' : 'transparent',
-              transition: 'background 0.15s',
-            }}>
-              <span style={{ fontSize: '0.95rem' }}>{item.icon}</span>
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-    </aside>
-  );
 }
 
 export default function AiAssistant() {
@@ -75,7 +32,6 @@ export default function AiAssistant() {
     try {
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
-      // Build chat history from actual exchanges only (skip welcome message)
       const chatHistory: { role: string; parts: { text: string }[] }[] = [];
       const userMsgs = messages.filter(m => m.role === 'user');
       const assistantMsgs = messages.filter(m => m.role === 'assistant').slice(1);
@@ -150,37 +106,35 @@ export default function AiAssistant() {
   ];
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f0f4f8', fontFamily: "'Nunito', sans-serif" }}>
+    <Layout active="AI Assistant">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
         .chat-input:focus { outline: none; border-color: #2e7da8 !important; box-shadow: 0 0 0 3px rgba(46,125,168,0.09) !important; }
         .send-btn:hover { background: #1a3a50 !important; }
         .suggest-btn:hover { background: #dce8f0 !important; }
+        .ai-chat-container { display: flex; flex-direction: column; height: calc(100vh - 160px); min-height: 400px; }
+        @media (max-width: 768px) { .ai-chat-container { height: calc(100vh - 100px); } }
       `}</style>
 
-      <Sidebar active="AI Assistant" />
-
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '32px 40px', maxHeight: '100vh', overflow: 'hidden' }}>
-
-        <div style={{ marginBottom: '20px', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
-            <div style={{
-              width: '40px', height: '40px', borderRadius: '50%',
-              background: 'linear-gradient(135deg, #2e7da8, #1a3a50)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '1.2rem',
-            }}>🤖</div>
-            <div>
-              <h1 style={{ fontWeight: 700, fontSize: '1.4rem', color: '#1a3a50', margin: 0 }}>
-                AI Study Assistant
-              </h1>
-              <p style={{ color: '#7a9db5', fontSize: '0.78rem', margin: 0 }}>
-                Powered by Google Gemini • Ask anything about your studies
-              </p>
-            </div>
+      <div style={{ marginBottom: '20px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+          <div style={{
+            width: '40px', height: '40px', borderRadius: '50%',
+            background: 'linear-gradient(135deg, #2e7da8, #1a3a50)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '1.2rem',
+          }}>🤖</div>
+          <div>
+            <h1 style={{ fontWeight: 700, fontSize: '1.4rem', color: '#1a3a50', margin: 0 }}>
+              AI Study Assistant
+            </h1>
+            <p style={{ color: '#7a9db5', fontSize: '0.78rem', margin: 0 }}>
+              Powered by Google Gemini • Ask anything about your studies
+            </p>
           </div>
         </div>
+      </div>
 
+      <div className="ai-chat-container">
         <div style={{
           flex: 1, background: '#fff', borderRadius: '14px',
           border: '1px solid #dce8f0', display: 'flex',
@@ -293,7 +247,7 @@ export default function AiAssistant() {
             </button>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </Layout>
   );
 }
