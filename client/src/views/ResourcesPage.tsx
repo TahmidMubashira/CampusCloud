@@ -31,11 +31,12 @@ interface Course {
 }
 
 const NAV_ITEMS = [
-  { label: 'Home', to: '/', icon: '🏠' },
-  { label: 'Resources', to: '/resources', icon: '📄' },
-  { label: 'Upload', to: '/upload', icon: '⬆️' },
-  { label: 'Rewards', to: '/rewards', icon: '🏅' },
-  { label: 'Profile', to: '/profile', icon: '👤' },
+  { label: 'Home',         to: '/',          icon: '🏠' },
+  { label: 'Resources',    to: '/resources', icon: '📄' },
+  { label: 'Upload',       to: '/upload',    icon: '⬆️' },
+  { label: 'Rewards',      to: '/rewards',   icon: '🏅' },
+  { label: 'Profile',      to: '/profile',   icon: '👤' },
+  { label: 'AI Assistant', to: '/assistant', icon: '🤖' }, // 👈 added
 ];
 
 const FILE_TYPES = ['PDF', 'DOCX', 'XLSX', 'PPTX', 'ZIP', 'MP4', 'JPG'];
@@ -121,7 +122,6 @@ export default function ResourcesPage() {
   const [selectedCourse, setSelectedCourse] = useState('');
   const [selectedFileType, setSelectedFileType] = useState('');
 
-  // ── Fetch all resources + departments once on mount ────────────────────────
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -146,12 +146,11 @@ export default function ResourcesPage() {
     fetchData();
   }, []);
 
-  // ── Fetch courses when department filter changes ───────────────────────────
   useEffect(() => {
     if (selectedDepartment) {
       fetch(`/api/courses/${selectedDepartment}`)
         .then(r => r.json())
-        .then(data => setCourses(Array.isArray(data) ? data : []))  // ← fixed
+        .then(data => setCourses(Array.isArray(data) ? data : []))
         .catch(() => toast.error('Failed to load courses'));
     } else {
       setCourses([]);
@@ -235,7 +234,6 @@ export default function ResourcesPage() {
         }}>
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
 
-            {/* Search */}
             <div style={{ flex: 1, minWidth: '250px' }}>
               <input
                 type="text"
@@ -254,7 +252,6 @@ export default function ResourcesPage() {
               />
             </div>
 
-            {/* Department filter */}
             <select
               value={selectedDepartment}
               onChange={e => setSelectedDepartment(e.target.value)}
@@ -274,7 +271,6 @@ export default function ResourcesPage() {
               ))}
             </select>
 
-            {/* Course filter */}
             <select
               value={selectedCourse}
               onChange={e => setSelectedCourse(e.target.value)}
@@ -300,7 +296,6 @@ export default function ResourcesPage() {
               ))}
             </select>
 
-            {/* File type filter */}
             <select
               value={selectedFileType}
               onChange={e => setSelectedFileType(e.target.value)}
@@ -316,7 +311,6 @@ export default function ResourcesPage() {
               {FILE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
 
-            {/* Clear filters */}
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}

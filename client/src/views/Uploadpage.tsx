@@ -3,11 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 const NAV_ITEMS = [
-  { label: 'Home', to: '/', icon: '🏠' },
-  { label: 'Resources', to: '/resources', icon: '📄' },
-  { label: 'Upload', to: '/upload', icon: '⬆️' },
-  { label: 'Rewards', to: '/rewards', icon: '🏅' },
-  { label: 'Profile', to: '/profile', icon: '👤' },
+  { label: 'Home',         to: '/',          icon: '🏠' },
+  { label: 'Resources',    to: '/resources', icon: '📄' },
+  { label: 'Upload',       to: '/upload',    icon: '⬆️' },
+  { label: 'Rewards',      to: '/rewards',   icon: '🏅' },
+  { label: 'Profile',      to: '/profile',   icon: '👤' },
+  { label: 'AI Assistant', to: '/assistant', icon: '🤖' },
 ];
 
 const RESOURCE_TYPES = [
@@ -180,30 +181,18 @@ export default function UploadPage() {
     file: null as File | null,
   });
 
-  // ── Load departments on mount ──────────────────────────────────────────────
   useEffect(() => {
     fetch('/api/departments')
-  .then(r => {
-    console.log('status:', r.status);
-    console.log('ok:', r.ok);
-    return r.json();
-  })
-  .then(data => {
-    console.log('departments raw response:', data);
-    setDepartments(Array.isArray(data) ? data : []);
-  })
-  .catch(err => {
-    console.error('fetch error:', err); // ← catch network errors
-    toast.error('Failed to load departments');
-  });
+      .then(r => r.json())
+      .then(data => setDepartments(Array.isArray(data) ? data : []))
+      .catch(() => toast.error('Failed to load departments'));
   }, []);
 
-  // ── Load courses when department changes ───────────────────────────────────
   useEffect(() => {
     if (formData.department_id) {
       fetch(`/api/courses/${formData.department_id}`)
         .then(r => r.json())
-        .then(data => setCourses(Array.isArray(data) ? data : []))    // ← fixed
+        .then(data => setCourses(Array.isArray(data) ? data : []))
         .catch(() => toast.error('Failed to load courses'));
     } else {
       setCourses([]);
@@ -274,7 +263,6 @@ export default function UploadPage() {
 
       <main style={{ flex: 1, padding: '36px 40px', overflowY: 'auto' }}>
 
-        {/* Hero Banner */}
         <div style={{
           background: 'linear-gradient(135deg, #d4e8f4 0%, #e2f0f8 50%, #cce0ee 100%)',
           borderRadius: '14px',
@@ -301,7 +289,6 @@ export default function UploadPage() {
           </div>
         </div>
 
-        {/* Form Card */}
         <div style={{
           background: '#fff',
           borderRadius: '14px',
@@ -310,7 +297,6 @@ export default function UploadPage() {
           boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
         }}>
 
-          {/* Upload Guidelines */}
           <div style={{
             background: '#f0f7fc',
             borderRadius: '10px',
@@ -340,7 +326,6 @@ export default function UploadPage() {
 
           <form onSubmit={handleSubmit}>
 
-            {/* Resource Title */}
             <div style={{ marginBottom: '16px' }}>
               <label style={labelStyle}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
@@ -360,7 +345,6 @@ export default function UploadPage() {
               />
             </div>
 
-            {/* Description */}
             <div style={{ marginBottom: '20px' }}>
               <label style={labelStyle}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
@@ -381,10 +365,7 @@ export default function UploadPage() {
               />
             </div>
 
-            {/* Department + Course Code + Resource Type */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '20px' }}>
-
-              {/* Department */}
               <div>
                 <label style={labelStyle}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
@@ -393,23 +374,14 @@ export default function UploadPage() {
                   </svg>
                   Department <span style={{ color: '#e05a3a' }}>*</span>
                 </label>
-                <select
-                  className="up-select"
-                  name="department_id"
-                  value={formData.department_id}
-                  onChange={handleChange}
-                  style={selectStyle}
-                >
+                <select className="up-select" name="department_id" value={formData.department_id} onChange={handleChange} style={selectStyle}>
                   <option value="">Select Department</option>
                   {departments.map(d => (
-                    <option key={d.department_id} value={d.department_id}>
-                      {d.department_name}
-                    </option>
+                    <option key={d.department_id} value={d.department_id}>{d.department_name}</option>
                   ))}
                 </select>
               </div>
 
-              {/* Course Code */}
               <div>
                 <label style={labelStyle}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
@@ -425,18 +397,13 @@ export default function UploadPage() {
                   disabled={!formData.department_id}
                   style={!formData.department_id ? disabledSelectStyle : selectStyle}
                 >
-                  <option value="">
-                    {formData.department_id ? 'Select Course Code' : 'Select Department first'}
-                  </option>
+                  <option value="">{formData.department_id ? 'Select Course Code' : 'Select Department first'}</option>
                   {courses.map(c => (
-                    <option key={c.course_id} value={c.course_id}>
-                      {c.course_code}
-                    </option>
+                    <option key={c.course_id} value={c.course_id}>{c.course_code}</option>
                   ))}
                 </select>
               </div>
 
-              {/* Resource Type */}
               <div>
                 <label style={labelStyle}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
@@ -446,20 +413,13 @@ export default function UploadPage() {
                   </svg>
                   Resource Type <span style={{ color: '#e05a3a' }}>*</span>
                 </label>
-                <select
-                  className="up-select"
-                  name="resourceType"
-                  value={formData.resourceType}
-                  onChange={handleChange}
-                  style={selectStyle}
-                >
+                <select className="up-select" name="resourceType" value={formData.resourceType} onChange={handleChange} style={selectStyle}>
                   <option value="">Select Resource Type</option>
                   {RESOURCE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
             </div>
 
-            {/* Upload File */}
             <div style={{ marginBottom: '28px' }}>
               <label style={labelStyle}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4a6a80" strokeWidth="2">
@@ -525,7 +485,6 @@ export default function UploadPage() {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
               <Link
                 to="/resources"
