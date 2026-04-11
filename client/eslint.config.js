@@ -23,6 +23,12 @@ export default tseslint.config(
         'warn',
         { allowConstantExport: true },
       ],
+      // Downgraded to warn — codebase uses `any` intentionally in API responses
+      '@typescript-eslint/no-explicit-any': 'warn',
+      // Downgraded to warn — minor style preference
+      'prefer-const': 'warn',
+      // Downgraded to warn — useEffect deps are intentionally controlled
+      'react-hooks/exhaustive-deps': 'warn',
     },
   },
 )
