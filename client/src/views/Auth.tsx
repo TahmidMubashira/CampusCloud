@@ -44,13 +44,13 @@ export function LoginPage() {
     setLoading(true);
     try {
       // Step 1: Get CSRF cookie first
-      await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/sanctum/csrf-cookie`, {
+      await fetch(`/sanctum/csrf-cookie`, {
         method: 'GET',
         credentials: 'include',
       });
 
       // Step 2: Then login
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/login`, {
+      const res = await fetch(`/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -221,13 +221,13 @@ export function RegisterPage() {
     setLoading(true);
     try {
       // Step 1: Get CSRF cookie first
-      await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/sanctum/csrf-cookie`, {
+      await fetch(`/sanctum/csrf-cookie`, {
         method: 'GET',
         credentials: 'include',
       });
 
       // Step 2: Then register
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/register`, {
+      const res = await fetch(`/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -295,27 +295,6 @@ export function RegisterPage() {
             {/* Alerts */}
             {error && <Alert variant="danger" style={{ fontSize: '0.82rem', borderRadius: '8px', padding: '10px 14px' }}>{error}</Alert>}
             {success && <Alert variant="success" style={{ fontSize: '0.82rem', borderRadius: '8px', padding: '10px 14px' }}>{success}</Alert>}
-
-            {/* Role selector */}
-            <div style={{ marginBottom: '1.25rem' }}>
-              <p style={{ ...labelStyle, marginBottom: '10px' }}>I am a</p>
-              <Row className="g-2">
-                {[
-                  { value: 'student', label: 'Student', icon: '🎓' },
-                  { value: 'teacher', label: 'Teacher', icon: '👨‍🏫' },
-                ].map(r => (
-                  <Col xs={6} key={r.value}>
-                    <div
-                      className={`role-card ${form.role === r.value ? 'selected' : ''}`}
-                      onClick={() => setForm({ ...form, role: r.value })}
-                    >
-                      <div style={{ fontSize: '1.4rem', marginBottom: '4px' }}>{r.icon}</div>
-                      <div style={{ color: form.role === r.value ? '#2e7da8' : '#4a6a80', fontWeight: 700, fontSize: '0.84rem' }}>{r.label}</div>
-                    </div>
-                  </Col>
-                ))}
-              </Row>
-            </div>
 
             {/* Form */}
             <Form onSubmit={handleSubmit}>
@@ -431,7 +410,7 @@ export function AdminLoginPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_ENDPOINT}/api/admin/login`,
+        `/api/admin/login`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

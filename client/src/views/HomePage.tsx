@@ -445,7 +445,7 @@ export default function HomePage() {
                   📚 {allResources.length}+ Resources
                 </div>
                 <div style={{ position: 'absolute', bottom: '12px', left: '14px', background: '#fff', borderRadius: '7px', padding: '4px 10px', fontSize: '0.67rem', fontWeight: 700, color: '#3a8a5e', border: '1px solid #b8d8c8', fontFamily: "'Nunito', sans-serif" }}>
-                  ✅ Free to Download
+                  ✅ Free to Use
                 </div>
               </div>
             </Col>
