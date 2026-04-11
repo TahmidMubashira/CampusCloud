@@ -45,20 +45,6 @@ function Sidebar({ active }: { active: string }) {
           );
         })}
       </nav>
-      <div style={{
-        margin: '0 12px', borderTop: '1px solid #b8cdd9',
-        paddingTop: '16px', display: 'flex', alignItems: 'center', gap: '10px',
-      }}>
-        <div style={{
-          width: '36px', height: '36px', borderRadius: '50%', background: '#8aafc5',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'white', fontWeight: 700, fontSize: '0.85rem',
-        }}>SU</div>
-        <div>
-          <div style={{ fontWeight: 600, fontSize: '0.8rem', color: '#1a3a50' }}>Student User</div>
-          <div style={{ fontSize: '0.68rem', color: '#6a8fa8' }}>student@uni.edu</div>
-        </div>
-      </div>
     </aside>
   );
 }
