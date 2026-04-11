@@ -103,6 +103,9 @@ class ResourceController extends Controller
             ], 403);
         }
 
+        // Delete related activity logs first (foreign key constraint)
+        ActivityLog::where('resource_id', $resource->id)->delete();
+
         // Delete file from storage
         Storage::disk('public')->delete($resource->file_path);
 
