@@ -147,7 +147,7 @@ export default function ResourcesPage() {
           Resource Library
         </h1>
         <p style={{ color: '#6a8fa8', marginTop: '8px', marginBottom: 0 }}>
-          Browse and download academic resources shared by students and faculty
+          Browse and download academic resources shared by fellow students
         </p>
       </div>
 
