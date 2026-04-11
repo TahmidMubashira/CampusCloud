@@ -58,7 +58,6 @@ function ResourceCard({ resource, onDownload }: { resource: Resource; onDownload
         flexDirection: 'column',
       }}
     >
-      {/* File icon + title */}
       <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
         <div style={{
           width: '36px', height: '44px', flexShrink: 0,
@@ -84,7 +83,6 @@ function ResourceCard({ resource, onDownload }: { resource: Resource; onDownload
         </div>
       </div>
 
-      {/* Description */}
       <p style={{
         color: '#7a9db5', fontSize: '0.75rem', margin: '0 0 0.75rem', lineHeight: 1.5,
         display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden'
@@ -94,7 +92,6 @@ function ResourceCard({ resource, onDownload }: { resource: Resource; onDownload
 
       <div style={{ flex: 1 }} />
 
-      {/* Footer */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
         <div style={{ display: 'flex', gap: '6px' }}>
           <span style={{
@@ -158,7 +155,6 @@ export default function HomePage() {
   const [selectedCourse, setSelectedCourse] = useState('');
   const [selectedFileType, setSelectedFileType] = useState('');
 
-  // All data fetched once — CSR
   const [allResources, setAllResources] = useState<Resource[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -169,13 +165,11 @@ export default function HomePage() {
   const [loggingOut, setLoggingOut] = useState(false);
   const navigate = useNavigate();
 
-  // Check if user is logged in
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) setUser(JSON.parse(storedUser));
   }, []);
 
-  // Fetch all resources + departments ONCE on mount (CSR)
   useEffect(() => {
     Promise.all([
       fetch('/api/resources').then(r => r.json()),
@@ -189,7 +183,6 @@ export default function HomePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Fetch courses for selected department only
   useEffect(() => {
     if (selectedDepartment) {
       fetch(`/api/courses/${selectedDepartment}`)
@@ -201,7 +194,6 @@ export default function HomePage() {
     setSelectedCourse('');
   }, [selectedDepartment]);
 
-  // Logout handler
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
@@ -224,7 +216,6 @@ export default function HomePage() {
     }
   };
 
-  // Download handler
   const handleDownload = async (id: number) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`/api/download/${id}`, {
@@ -243,7 +234,6 @@ export default function HomePage() {
     URL.revokeObjectURL(url);
   };
 
-  // ── CSR filtering — pure in-memory, no API calls on filter change ──────────
   const filteredResources = allResources.filter(resource => {
     const matchesSearch =
       search === '' ||
@@ -252,25 +242,10 @@ export default function HomePage() {
       resource.department.toLowerCase().includes(search.toLowerCase()) ||
       resource.courseCode.toLowerCase().includes(search.toLowerCase());
 
-    // Resource type pill filter
-    const matchesType =
-      activeType === 'All' ||
-      resource.resourceType === activeType;
-
-    // JOIN on department_id
-    const matchesDepartment =
-      selectedDepartment === '' ||
-      String(resource.department_id) === String(selectedDepartment);
-
-    // JOIN on course_id
-    const matchesCourse =
-      selectedCourse === '' ||
-      String(resource.course_id) === String(selectedCourse);
-
-    // File type dropdown filter
-    const matchesFileType =
-      selectedFileType === '' ||
-      resource.fileType === selectedFileType;
+    const matchesType = activeType === 'All' || resource.resourceType === activeType;
+    const matchesDepartment = selectedDepartment === '' || String(resource.department_id) === String(selectedDepartment);
+    const matchesCourse = selectedCourse === '' || String(resource.course_id) === String(selectedCourse);
+    const matchesFileType = selectedFileType === '' || resource.fileType === selectedFileType;
 
     return matchesSearch && matchesType && matchesDepartment && matchesCourse && matchesFileType;
   });
@@ -309,22 +284,45 @@ export default function HomePage() {
         .filter-select { padding: 7px 12px; border: 1.5px solid #c8dce8; border-radius: 8px; font-size: 0.8rem; font-family: 'Nunito', sans-serif; color: #4a6a80; background: #fff; outline: none; cursor: pointer; }
         .filter-select:focus { border-color: #7ab0cc; }
         .filter-select:disabled { background: #f4f8fb; color: #b0c4d4; cursor: not-allowed; }
+
+        @media (max-width: 768px) {
+          .navbar-collapse {
+            background: #fff;
+            padding: 12px 16px;
+            border-top: 1px solid #dce8f0;
+            margin-top: 8px;
+          }
+          .navbar-collapse .nav-auth-btn {
+            display: block !important;
+            margin: 4px 0 !important;
+            text-align: center;
+          }
+          .navbar-collapse .dropdown {
+            margin: 4px 0;
+          }
+          .hero-row { flex-direction: column !important; }
+          .hero-image { display: none !important; }
+          .filter-selects { flex-direction: column !important; align-items: stretch !important; }
+          .filter-selects select { width: 100% !important; }
+          .cat-pills { gap: 6px !important; }
+        }
       `}</style>
 
-      {/* ── Navbar ── */}
+      {/* Navbar */}
       <Navbar expand="md" style={{
         background: '#fff', borderBottom: '1px solid #dce8f0',
         padding: '0.55rem 0', position: 'sticky', top: 0, zIndex: 100,
         boxShadow: '0 1px 6px rgba(0,0,0,0.05)',
       }}>
         <Container>
-          <Navbar.Toggle style={{ border: '1px solid #dce8f0', padding: '4px 8px' }} />
           <Navbar.Brand as={Link} to="/" style={{
             fontFamily: "'Lora', serif", fontWeight: 700,
             color: '#1a3a50', fontSize: '1.35rem', marginLeft: '6px',
           }}>
             CampusCloud
           </Navbar.Brand>
+
+          <Navbar.Toggle style={{ border: '1px solid #dce8f0', padding: '4px 8px' }} />
 
           <Navbar.Collapse>
             <Nav className="ms-auto align-items-center gap-1">
@@ -382,14 +380,14 @@ export default function HomePage() {
         </Container>
       </Navbar>
 
-      {/* ── Hero ── */}
+      {/* Hero */}
       <div style={{
         background: 'linear-gradient(135deg, #cfe5f2 0%, #dff0f8 40%, #c8dff0 100%)',
         borderBottom: '1px solid #b8d4e4', padding: '2.8rem 0',
       }}>
         <Container>
           <Row className="align-items-center">
-            <Col md={5}>
+            <Col md={5} xs={12}>
               <h1 style={{
                 fontFamily: "'Lora', serif", fontWeight: 700,
                 fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: '#1a3a50',
@@ -424,7 +422,7 @@ export default function HomePage() {
               </InputGroup>
             </Col>
 
-            <Col md={7} className="mt-4 mt-md-0" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Col md={7} xs={12} className="mt-4 mt-md-0" style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <div style={{
                 background: 'linear-gradient(135deg, #b8d4e4 0%, #cce4f0 100%)',
                 borderRadius: '16px', border: '1px solid #a0c4d8', width: '100%',
@@ -453,7 +451,7 @@ export default function HomePage() {
         </Container>
       </div>
 
-      {/* ── Browse Section ── */}
+      {/* Browse Section */}
       <Container style={{ padding: '2.5rem 1rem 3.5rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <h2 style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: '1.45rem', color: '#1a3a50', marginBottom: '0.35rem' }}>
@@ -464,8 +462,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* Resource type pills */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+        <div className="cat-pills" style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
           {RESOURCE_TYPES.map(type => (
             <button
               key={type}
@@ -477,51 +474,30 @@ export default function HomePage() {
           ))}
         </div>
 
-        {/* Department / Course / File type dropdowns */}
-        <div style={{
+        <div className="filter-selects" style={{
           display: 'flex', gap: '10px', flexWrap: 'wrap',
           justifyContent: 'center', marginBottom: '1.5rem',
         }}>
-          <select
-            className="filter-select"
-            value={selectedDepartment}
-            onChange={e => setSelectedDepartment(e.target.value)}
-          >
+          <select className="filter-select" value={selectedDepartment} onChange={e => setSelectedDepartment(e.target.value)}>
             <option value="">All Departments</option>
             {departments.map(d => (
-              <option key={d.department_id} value={d.department_id}>
-                {d.department_name}
-              </option>
+              <option key={d.department_id} value={d.department_id}>{d.department_name}</option>
             ))}
           </select>
 
-          <select
-            className="filter-select"
-            value={selectedCourse}
-            onChange={e => setSelectedCourse(e.target.value)}
-            disabled={!selectedDepartment}
-          >
-            <option value="">
-              {selectedDepartment ? 'All Courses' : 'Select Dept First'}
-            </option>
+          <select className="filter-select" value={selectedCourse} onChange={e => setSelectedCourse(e.target.value)} disabled={!selectedDepartment}>
+            <option value="">{selectedDepartment ? 'All Courses' : 'Select Dept First'}</option>
             {courses.map(c => (
-              <option key={c.course_id} value={c.course_id}>
-                {c.course_code}
-              </option>
+              <option key={c.course_id} value={c.course_id}>{c.course_code}</option>
             ))}
           </select>
 
-          <select
-            className="filter-select"
-            value={selectedFileType}
-            onChange={e => setSelectedFileType(e.target.value)}
-          >
+          <select className="filter-select" value={selectedFileType} onChange={e => setSelectedFileType(e.target.value)}>
             <option value="">All File Types</option>
             {FILE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
 
-        {/* Results info + clear */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <p style={{ color: '#7a9db5', fontSize: '0.78rem', margin: 0 }}>
             {loading ? 'Loading...' : (
@@ -529,34 +505,24 @@ export default function HomePage() {
             )}
           </p>
           {hasActiveFilters && (
-            <button
-              onClick={clearFilters}
-              style={{ background: 'none', border: 'none', color: '#2e7da8', fontSize: '0.76rem', cursor: 'pointer', textDecoration: 'underline', fontFamily: "'Nunito', sans-serif" }}
-            >
+            <button onClick={clearFilters} style={{ background: 'none', border: 'none', color: '#2e7da8', fontSize: '0.76rem', cursor: 'pointer', textDecoration: 'underline', fontFamily: "'Nunito', sans-serif" }}>
               Clear filters
             </button>
           )}
         </div>
 
-        {/* Error */}
         {error && (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#e07a7a', fontSize: '0.85rem' }}>
-            ⚠️ {error}
-          </div>
+          <div style={{ textAlign: 'center', padding: '2rem', color: '#e07a7a', fontSize: '0.85rem' }}>⚠️ {error}</div>
         )}
 
-        {/* Loading skeletons */}
         {loading && (
           <Row className="g-3">
             {[1, 2, 3, 4, 5, 6].map(i => (
-              <Col key={i} xs={12} sm={6} md={4}>
-                <ResourceSkeleton />
-              </Col>
+              <Col key={i} xs={12} sm={6} md={4}><ResourceSkeleton /></Col>
             ))}
           </Row>
         )}
 
-        {/* Empty state */}
         {!loading && !error && filteredResources.length === 0 && (
           <div style={{ textAlign: 'center', padding: '3rem', color: '#7a9db5' }}>
             <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔍</div>
@@ -564,7 +530,6 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Resource grid */}
         {!loading && !error && filteredResources.length > 0 && (
           <Row className="g-3">
             {filteredResources.map(r => (
@@ -575,7 +540,6 @@ export default function HomePage() {
           </Row>
         )}
 
-        {/* View all button */}
         {!loading && filteredResources.length > 0 && (
           <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
             <Link to="/resources">
@@ -592,7 +556,7 @@ export default function HomePage() {
         )}
       </Container>
 
-      {/* ── Footer ── */}
+      {/* Footer */}
       <footer style={{ background: '#cce0ed', borderTop: '1px solid #b0ccdc', padding: '1.4rem 0', textAlign: 'center' }}>
         <p style={{ color: '#4a6a80', fontSize: '0.82rem', fontFamily: "'Nunito', sans-serif", margin: 0, fontWeight: 600 }}>
           © 2026 CampusCloud. All rights reserved. For academic use only.
