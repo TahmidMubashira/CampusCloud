@@ -125,7 +125,7 @@ function StatCard({ label, value, sub, icon }: {
 }
 
 // ── Admin AI Assistant Component ──────────────────────────────────────────────
-function AdminAiAssistant({ admin }: { admin: any }) {
+function AdminAiAssistant() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
@@ -197,7 +197,6 @@ function AdminAiAssistant({ admin }: { admin: any }) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   };
 
-  // Admin-specific suggested questions
   const suggestedQuestions = [
     '📊 What makes a high quality academic resource?',
     '🔍 How to evaluate if a resource should be approved?',
@@ -213,7 +212,6 @@ function AdminAiAssistant({ admin }: { admin: any }) {
         .admin-suggest-btn:hover { background: #dce8f0 !important; }
       `}</style>
 
-      {/* Header */}
       <div style={{ marginBottom: '16px', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
@@ -233,15 +231,12 @@ function AdminAiAssistant({ admin }: { admin: any }) {
         </div>
       </div>
 
-      {/* Chat Container */}
       <div style={{
         flex: 1, background: '#fff', borderRadius: '14px',
         border: '1px solid #dce8f0', display: 'flex',
         flexDirection: 'column', overflow: 'hidden',
         boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
       }}>
-
-        {/* Messages */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {messages.map((msg, i) => (
             <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
@@ -280,7 +275,6 @@ function AdminAiAssistant({ admin }: { admin: any }) {
           <div ref={bottomRef} />
         </div>
 
-        {/* Suggested Questions — admin specific */}
         {messages.length === 1 && (
           <div style={{ padding: '0 16px 12px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             {suggestedQuestions.map((q, i) => (
@@ -301,7 +295,6 @@ function AdminAiAssistant({ admin }: { admin: any }) {
           </div>
         )}
 
-        {/* Input */}
         <div style={{ padding: '12px 16px', borderTop: '1px solid #dce8f0', display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
           <textarea
             className="admin-chat-input"
@@ -366,7 +359,6 @@ export default function AdminPage() {
     fetchData();
   }, []);
 
-  // Check URL to determine which view to show
   useEffect(() => {
     if (window.location.pathname === '/admin/ai') {
       setCurrentView('ai');
@@ -447,7 +439,6 @@ export default function AdminPage() {
 
       <main style={{ flex: 1, padding: "36px 40px", overflowY: "auto", position: "relative" }}>
 
-        {/* Toast */}
         {toast && (
           <div style={{
             position: "fixed", top: "24px", right: "24px", zIndex: 9999,
@@ -458,12 +449,10 @@ export default function AdminPage() {
           }}>{toast}</div>
         )}
 
-        {/* ── AI View ── */}
         {currentView === 'ai' ? (
-          <AdminAiAssistant admin={admin} />
+          <AdminAiAssistant />
         ) : (
           <>
-            {/* ── Dashboard View ── */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "28px" }}>
               <div>
                 <h1 style={{ fontWeight: 700, fontSize: "1.6rem", color: "#1a3a50", margin: 0 }}>
@@ -485,14 +474,12 @@ export default function AdminPage() {
               </button>
             </div>
 
-            {/* Stats */}
             <div style={{ display: "flex", gap: "16px", marginBottom: "32px" }}>
               <StatCard label="Pending Approvals" value={loading ? '...' : stats.pendingCount} sub="Requires Attention" icon="🕐" />
               <StatCard label="Approved Resources" value={loading ? '...' : stats.approvedCount} sub="Live on platform" icon="✅" />
               <StatCard label="Total Downloads" value={loading ? '...' : stats.totalDownloads} sub="Platform Activity" icon="⬇️" />
             </div>
 
-            {/* Pending Approvals */}
             <div style={{ background: "#fff", borderRadius: "12px", padding: "24px", border: "1px solid #dce8f0" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
                 <h2 style={{ fontWeight: 700, fontSize: "1rem", color: "#1a3a50", margin: 0 }}>
@@ -531,7 +518,6 @@ export default function AdminPage() {
               ))}
             </div>
 
-            {/* Platform Summary */}
             <div style={{ background: "#fff", borderRadius: "12px", padding: "24px", border: "1px solid #dce8f0", marginTop: "24px" }}>
               <h2 style={{ fontWeight: 700, fontSize: "1rem", color: "#1a3a50", margin: "0 0 16px" }}>Platform Summary</h2>
               <div style={{ display: "flex", gap: "24px" }}>
