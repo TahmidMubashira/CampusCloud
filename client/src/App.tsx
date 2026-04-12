@@ -12,7 +12,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 import { Toaster } from 'react-hot-toast';
 
-
 function App() {
   return (
     <>
@@ -22,43 +21,36 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        {/* Protected routes - login required */}
+        {/* Protected routes */}
         <Route path="/resources" element={
-          <ProtectedRoute>
-            <ResourcesPage />
-          </ProtectedRoute>
+          <ProtectedRoute><ResourcesPage /></ProtectedRoute>
         } />
 
         <Route path="/admin/login" element={<AdminLoginPage />} />
+
         <Route path="/admin" element={
-          <ProtectedRoute>
-            <AdminPage />
-          </ProtectedRoute>
+          <ProtectedRoute><AdminPage /></ProtectedRoute>
+        } />
+
+        {/* 👈 Add this new route for admin AI */}
+        <Route path="/admin/ai" element={
+          <ProtectedRoute><AdminPage /></ProtectedRoute>
         } />
 
         <Route path="/upload" element={
-          <ProtectedRoute>
-            <UploadPage />
-          </ProtectedRoute>
+          <ProtectedRoute><UploadPage /></ProtectedRoute>
         } />
 
         <Route path="/rewards" element={
-          <ProtectedRoute>
-            <RewardsPage />
-          </ProtectedRoute>
+          <ProtectedRoute><RewardsPage /></ProtectedRoute>
         } />
 
         <Route path="/profile" element={
-          <ProtectedRoute>
-            <StudentProfile />
-          </ProtectedRoute>
+          <ProtectedRoute><StudentProfile /></ProtectedRoute>
         } />
 
-        {/* AI Assistant route */}
         <Route path="/assistant" element={
-          <ProtectedRoute>
-            <AiAssistant />
-          </ProtectedRoute>
+          <ProtectedRoute><AiAssistant /></ProtectedRoute>
         } />
 
         {/* catch-all */}
