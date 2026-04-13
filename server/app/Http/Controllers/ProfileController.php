@@ -85,6 +85,7 @@ class ProfileController extends Controller
                 'resources.title',
                 'resources.file_type',
                 'resources.created_at',
+                'resources.rejection_reason',
                 'departments.department_name',
                 'courses.course_code'
             )
@@ -135,6 +136,7 @@ class ProfileController extends Controller
                 'courseCode' => $r->course_code,
                 'fileType'   => $r->file_type,
                 'timeAgo'    => $r->created_at->diffForHumans(),
+                'rejection_reason' => $r->rejection_reason ?? '',
             ]),
         ]);
     }

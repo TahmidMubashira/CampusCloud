@@ -21,6 +21,7 @@ class Resource extends Model
     'user_id',
     'is_approved',
     'status',
+    'rejection_reason',
 ];
 
     public function user()
