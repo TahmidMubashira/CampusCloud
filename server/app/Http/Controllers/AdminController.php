@@ -109,16 +109,24 @@ class AdminController extends Controller
     }
 
     // Reject resource
-    public function reject($id)
+    public function reject(Request $request, $id)
     {
+        $request->validate([
+            'reason' => 'required|string|max:500'
+        ]);
+
         $resource = Resource::findOrFail($id);
-        $resource->update(['is_approved' => 0, 'status' => 'rejected']);
+            $resource->update([
+            'is_approved'      => 0,
+            'status'           => 'rejected',
+            'rejection_reason' => $request->reason,
+        ]);
 
         ActivityLog::create([
             'user_id'     => $resource->user_id,
             'action'      => 'rejected',
             'resource_id' => $resource->id,
-            'details'     => 'Rejected: ' . $resource->title,
+            'details'     => 'Rejected: ' . $resource->title . ' — Reason: ' . $request->reason,
         ]);
 
         return response()->json(['success' => true, 'message' => 'Resource rejected.']);

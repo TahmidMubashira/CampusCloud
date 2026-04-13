@@ -9,6 +9,7 @@ interface UploadItem {
   fileType: string;
   downloads?: number;
   timeAgo: string;
+  rejection_reason?: string; 
 }
 
 interface ProfileStats {
@@ -70,72 +71,98 @@ function UploadRow({ item, badge, onDelete }: {
     }
   };
 
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: '14px',
-      padding: '14px 16px', background: '#f5f9fc',
-      borderRadius: '8px', marginBottom: '10px', border: '1px solid #e4eef5',
-      flexWrap: 'wrap',
-    }}>
-      <div style={{
-        width: '34px', height: '38px', flexShrink: 0,
-        background: '#edf5fa', border: '1px solid #c8dce8',
-        borderRadius: '6px', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', fontSize: '1rem',
-      }}>📄</div>
+  const hasReason = badge === 'rejected' && item.rejection_reason;
 
-      <div style={{ flex: 1, minWidth: '120px' }}>
-        <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#1a3a50' }}>
-          {item.title}
+  return (
+    <div style={{ marginBottom: '10px' }}>
+      {/* Main row */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '14px',
+        padding: '14px 16px', background: '#f5f9fc',
+        borderRadius: hasReason ? '8px 8px 0 0' : '8px',
+        border: '1px solid #e4eef5',
+        borderBottom: hasReason ? 'none' : '1px solid #e4eef5',
+        flexWrap: 'wrap',
+      }}>
+        <div style={{
+          width: '34px', height: '38px', flexShrink: 0,
+          background: '#edf5fa', border: '1px solid #c8dce8',
+          borderRadius: '6px', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', fontSize: '1rem',
+        }}>📄</div>
+
+        <div style={{ flex: 1, minWidth: '120px' }}>
+          <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#1a3a50' }}>
+            {item.title}
+          </div>
+          <div style={{ fontSize: '0.72rem', color: '#7a9db5' }}>
+            {item.department} • {item.courseCode}
+          </div>
+          <div style={{ display: 'flex', gap: '14px', marginTop: '4px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.68rem', color: '#9ab5c5' }}>🕐 {item.timeAgo}</span>
+            {item.downloads !== undefined && (
+              <span style={{ fontSize: '0.68rem', color: '#9ab5c5' }}>⬇️ {item.downloads} downloads</span>
+            )}
+          </div>
         </div>
-        <div style={{ fontSize: '0.72rem', color: '#7a9db5' }}>
-          {item.department} • {item.courseCode}
-        </div>
-        <div style={{ display: 'flex', gap: '14px', marginTop: '4px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.68rem', color: '#9ab5c5' }}>🕐 {item.timeAgo}</span>
-          {item.downloads !== undefined && (
-            <span style={{ fontSize: '0.68rem', color: '#9ab5c5' }}>⬇️ {item.downloads} downloads</span>
+
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+          <span style={{
+            background: color.bg, color: color.text,
+            borderRadius: '4px', padding: '2px 8px',
+            fontSize: '0.68rem', fontWeight: 700,
+          }}>{item.fileType}</span>
+
+          {badge === 'pending' && (
+            <span style={{
+              background: '#fff8e1', color: '#b8860b',
+              borderRadius: '4px', padding: '2px 8px',
+              fontSize: '0.65rem', fontWeight: 700,
+            }}>⏳ Pending</span>
+          )}
+          {badge === 'rejected' && (
+            <span style={{
+              background: '#fee2e2', color: '#dc2626',
+              borderRadius: '4px', padding: '2px 8px',
+              fontSize: '0.65rem', fontWeight: 700,
+            }}>❌ Rejected</span>
+          )}
+
+          {onDelete && (
+            <button
+              onClick={handleDelete}
+              style={{
+                background: '#fee2e2', color: '#dc2626',
+                border: 'none', borderRadius: '4px',
+                padding: '2px 8px', fontSize: '0.65rem',
+                fontWeight: 700, cursor: 'pointer',
+                marginTop: '2px',
+              }}
+            >
+              🗑️ Delete
+            </button>
           )}
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-        <span style={{
-          background: color.bg, color: color.text,
-          borderRadius: '4px', padding: '2px 8px',
-          fontSize: '0.68rem', fontWeight: 700,
-        }}>{item.fileType}</span>
-
-        {badge === 'pending' && (
-          <span style={{
-            background: '#fff8e1', color: '#b8860b',
-            borderRadius: '4px', padding: '2px 8px',
-            fontSize: '0.65rem', fontWeight: 700,
-          }}>⏳ Pending</span>
-        )}
-        {badge === 'rejected' && (
-          <span style={{
-            background: '#fee2e2', color: '#dc2626',
-            borderRadius: '4px', padding: '2px 8px',
-            fontSize: '0.65rem', fontWeight: 700,
-          }}>❌ Rejected</span>
-        )}
-
-        {onDelete && (
-          <button
-            onClick={handleDelete}
-            style={{
-              background: '#fee2e2', color: '#dc2626',
-              border: 'none', borderRadius: '4px',
-              padding: '2px 8px', fontSize: '0.65rem',
-              fontWeight: 700, cursor: 'pointer',
-              marginTop: '2px',
-            }}
-          >
-            🗑️ Delete
-          </button>
-        )}
-      </div>
+      {/* Rejection reason banner — only shows for rejected items with a reason */}
+      {hasReason && (
+        <div style={{
+          padding: '10px 16px',
+          background: '#fff5f5',
+          border: '1px solid #fecaca',
+          borderTop: 'none',
+          borderRadius: '0 0 8px 8px',
+          fontSize: '0.78rem',
+          color: '#dc2626',
+          display: 'flex',
+          gap: '8px',
+          alignItems: 'flex-start',
+        }}>
+          <span style={{ flexShrink: 0 }}>💬</span>
+          <span><strong>Admin feedback:</strong> {item.rejection_reason}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -207,6 +234,10 @@ export default function StudentProfile() {
   const handleDelete = (id: number) => {
     setStats(prev => {
       if (!prev) return prev;
+      const deleted =
+        prev.allApproved.find(r => r.id === id) ||
+        prev.pendingUploads.find(r => r.id === id) ||
+        prev.rejectedUploads.find(r => r.id === id);
       return {
         ...prev,
         allApproved:     prev.allApproved.filter(r => r.id !== id),
@@ -214,6 +245,7 @@ export default function StudentProfile() {
         pendingUploads:  prev.pendingUploads.filter(r => r.id !== id),
         rejectedUploads: prev.rejectedUploads.filter(r => r.id !== id),
         totalUploads:    prev.totalUploads - 1,
+        totalDownloads:  prev.totalDownloads - (deleted?.downloads ?? 0),
       };
     });
   };
