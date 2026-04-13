@@ -7,6 +7,7 @@ use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\RewardController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\CommentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -55,5 +56,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ── Profile ───────────────────────────────────────────────────────────────
     Route::get('/profile/stats', [ProfileController::class, 'stats']);
+
+    // ── Comments ───────────────────────────────────────────────────────────────
+    Route::get('/resources/{id}/comments',  [CommentController::class, 'index']);
+    Route::post('/resources/{id}/comments', [CommentController::class, 'store']);
+    Route::delete('/comments/{id}',         [CommentController::class, 'destroy']);
 
 });
