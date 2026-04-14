@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import Layout from './Layout';
 
@@ -17,6 +17,7 @@ interface Resource {
   uploadedBy: string;
   uploadedAt: string;
   downloads: number;
+  commentCount: number;
 }
 
 interface Department { department_id: number; department_name: string; }
@@ -42,33 +43,35 @@ interface Comment {
 
 const FILE_TYPES = ['PDF', 'DOCX', 'XLSX', 'PPTX', 'ZIP', 'MP4', 'JPG'];
 
-// ── Comment Section Component ─────────────────────────────────────────────────
+// ── Comment Section ───────────────────────────────────────────────────────────
 function CommentSection({ resourceId }: { resourceId: number }) {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [newComment, setNewComment] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [replyingTo, setReplyingTo] = useState<number | null>(null);
-  const [replyText, setReplyText] = useState('');
+  const [comments, setComments]           = useState<Comment[]>([]);
+  const [loading, setLoading]             = useState(true);
+  const [newComment, setNewComment]       = useState('');
+  const [submitting, setSubmitting]       = useState(false);
+  const [replyingTo, setReplyingTo]       = useState<number | null>(null);
+  const [replyText, setReplyText]         = useState('');
   const [expandedReplies, setExpandedReplies] = useState<Set<number>>(new Set());
 
+  // Fix: read token + currentUser inside the component so they're always fresh
   const token = localStorage.getItem('token');
-  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  // Fix: parse inside render so currentUser.id is always up-to-date
+  const currentUser: { id?: number; name?: string } =
+    JSON.parse(localStorage.getItem('user') || '{}');
 
-  // Fetch comments on mount
-  useEffect(() => {
+  // Fix: token added to dependency array; wrapped in useCallback to avoid stale ref
+  const fetchComments = useCallback(() => {
     fetch(`/api/resources/${resourceId}/comments`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
       .then(r => r.json())
-      .then(data => {
-        if (data.success) setComments(data.comments);
-      })
+      .then(data => { if (data.success) setComments(data.comments); })
       .catch(() => toast.error('Failed to load comments'))
       .finally(() => setLoading(false));
-  }, [resourceId]);
+  }, [resourceId, token]);
 
-  // Post a new top-level comment
+  useEffect(() => { fetchComments(); }, [fetchComments]);
+
   const handlePostComment = async () => {
     if (!newComment.trim()) return;
     if (!token) { toast.error('Please login to comment'); return; }
@@ -88,7 +91,6 @@ function CommentSection({ resourceId }: { resourceId: number }) {
     finally { setSubmitting(false); }
   };
 
-  // Post a reply
   const handlePostReply = async (parentId: number) => {
     if (!replyText.trim()) return;
     if (!token) { toast.error('Please login to reply'); return; }
@@ -101,13 +103,12 @@ function CommentSection({ resourceId }: { resourceId: number }) {
       });
       const data = await res.json();
       if (data.success) {
-        // Add reply to the parent comment
         setComments(prev => prev.map(c =>
           c.id === parentId
             ? { ...c, replies: [...c.replies, data.comment], replyCount: c.replyCount + 1 }
             : c
         ));
-        // Auto-expand replies for this comment
+        // Auto-expand so the new reply is visible
         setExpandedReplies(prev => new Set([...prev, parentId]));
         setReplyingTo(null);
         setReplyText('');
@@ -116,7 +117,6 @@ function CommentSection({ resourceId }: { resourceId: number }) {
     finally { setSubmitting(false); }
   };
 
-  // Delete a comment
   const handleDelete = async (commentId: number, parentId?: number) => {
     if (!window.confirm('Delete this comment?')) return;
     try {
@@ -126,25 +126,28 @@ function CommentSection({ resourceId }: { resourceId: number }) {
       });
       const data = await res.json();
       if (data.success) {
-        if (parentId) {
-          // Remove reply from parent
+        if (parentId !== undefined) {
           setComments(prev => prev.map(c =>
             c.id === parentId
               ? { ...c, replies: c.replies.filter(r => r.id !== commentId), replyCount: c.replyCount - 1 }
               : c
           ));
         } else {
-          // Remove top-level comment
           setComments(prev => prev.filter(c => c.id !== commentId));
         }
       } else { toast.error('Failed to delete'); }
     } catch { toast.error('Network error'); }
   };
 
+  // Fix: no ternary-as-statement — use if/else inside the updater
   const toggleReplies = (commentId: number) => {
     setExpandedReplies(prev => {
       const next = new Set(prev);
-      next.has(commentId) ? next.delete(commentId) : next.add(commentId);
+      if (next.has(commentId)) {
+        next.delete(commentId);
+      } else {
+        next.add(commentId);
+      }
       return next;
     });
   };
@@ -161,31 +164,35 @@ function CommentSection({ resourceId }: { resourceId: number }) {
       {/* Post new comment */}
       <div style={{ marginBottom: '16px' }}>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-          <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#8aafc5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.7rem', fontWeight: 700, flexShrink: 0, marginTop: '2px' }}>
+          <div style={{
+            width: '28px', height: '28px', borderRadius: '50%', background: '#8aafc5',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'white', fontSize: '0.7rem', fontWeight: 700, flexShrink: 0, marginTop: '2px',
+          }}>
             {currentUser?.name ? currentUser.name[0].toUpperCase() : '?'}
           </div>
           <div style={{ flex: 1 }}>
             <textarea
-              placeholder={token ? "Ask a question or leave a comment..." : "Login to comment"}
+              placeholder={token ? 'Ask a question or leave a comment...' : 'Login to comment'}
               value={newComment}
               onChange={e => setNewComment(e.target.value)}
               disabled={!token}
               rows={2}
-              style={{ width: '100%', padding: '8px 12px', border: '1px solid #dce8f0', borderRadius: '8px', fontSize: '0.82rem', resize: 'vertical', outline: 'none', fontFamily: 'inherit', background: token ? '#fff' : '#f4f8fb', boxSizing: 'border-box' }}
+              style={{
+                width: '100%', padding: '8px 12px', border: '1px solid #dce8f0',
+                borderRadius: '8px', fontSize: '0.82rem', resize: 'vertical',
+                outline: 'none', fontFamily: 'inherit',
+                background: token ? '#fff' : '#f4f8fb', boxSizing: 'border-box',
+              }}
             />
             {newComment.trim() && (
               <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-                <button
-                  onClick={handlePostComment}
-                  disabled={submitting}
-                  style={{ padding: '5px 14px', borderRadius: '6px', border: 'none', background: '#2e7da8', color: '#fff', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}
-                >
+                <button onClick={handlePostComment} disabled={submitting}
+                  style={{ padding: '5px 14px', borderRadius: '6px', border: 'none', background: '#2e7da8', color: '#fff', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}>
                   {submitting ? 'Posting...' : 'Post Comment'}
                 </button>
-                <button
-                  onClick={() => setNewComment('')}
-                  style={{ padding: '5px 12px', borderRadius: '6px', border: '1px solid #dce8f0', background: 'transparent', color: '#7a9db5', fontSize: '0.78rem', cursor: 'pointer' }}
-                >
+                <button onClick={() => setNewComment('')}
+                  style={{ padding: '5px 12px', borderRadius: '6px', border: '1px solid #dce8f0', background: 'transparent', color: '#7a9db5', fontSize: '0.78rem', cursor: 'pointer' }}>
                   Cancel
                 </button>
               </div>
@@ -203,9 +210,12 @@ function CommentSection({ resourceId }: { resourceId: number }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {comments.map(comment => (
             <div key={comment.id}>
-              {/* Comment */}
               <div style={{ display: 'flex', gap: '8px' }}>
-                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#6a9ab5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.7rem', fontWeight: 700, flexShrink: 0 }}>
+                <div style={{
+                  width: '28px', height: '28px', borderRadius: '50%', background: '#6a9ab5',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'white', fontSize: '0.7rem', fontWeight: 700, flexShrink: 0,
+                }}>
                   {comment.user[0].toUpperCase()}
                 </div>
                 <div style={{ flex: 1 }}>
@@ -214,7 +224,9 @@ function CommentSection({ resourceId }: { resourceId: number }) {
                       <span style={{ fontWeight: 600, fontSize: '0.8rem', color: '#1a3a50' }}>{comment.user}</span>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         <span style={{ fontSize: '0.7rem', color: '#9ab5c5' }}>{comment.timeAgo}</span>
-                        {currentUser?.id === comment.user_id && (
+                        {/* Fix: currentUser.id is now a number from parsed JSON; comment.user_id
+                            is cast to number by the API — strict equality works correctly */}
+                        {currentUser?.id !== undefined && currentUser.id === comment.user_id && (
                           <button onClick={() => handleDelete(comment.id)}
                             style={{ background: 'none', border: 'none', color: '#fca5a5', fontSize: '0.7rem', cursor: 'pointer', padding: '0' }}>
                             🗑️
@@ -225,7 +237,7 @@ function CommentSection({ resourceId }: { resourceId: number }) {
                     <p style={{ margin: 0, fontSize: '0.82rem', color: '#2a4a60', lineHeight: 1.5 }}>{comment.body}</p>
                   </div>
 
-                  {/* Action buttons */}
+                  {/* Action row */}
                   <div style={{ display: 'flex', gap: '12px', marginTop: '4px', paddingLeft: '4px' }}>
                     {token && (
                       <button
@@ -235,10 +247,11 @@ function CommentSection({ resourceId }: { resourceId: number }) {
                       </button>
                     )}
                     {comment.replyCount > 0 && (
-                      <button
-                        onClick={() => toggleReplies(comment.id)}
+                      <button onClick={() => toggleReplies(comment.id)}
                         style={{ background: 'none', border: 'none', color: '#6a8fa8', fontSize: '0.75rem', cursor: 'pointer', padding: 0 }}>
-                        {expandedReplies.has(comment.id) ? '▲ Hide' : `▼ ${comment.replyCount} ${comment.replyCount === 1 ? 'reply' : 'replies'}`}
+                        {expandedReplies.has(comment.id)
+                          ? '▲ Hide'
+                          : `▼ ${comment.replyCount} ${comment.replyCount === 1 ? 'reply' : 'replies'}`}
                       </button>
                     )}
                   </div>
@@ -246,7 +259,11 @@ function CommentSection({ resourceId }: { resourceId: number }) {
                   {/* Reply input */}
                   {replyingTo === comment.id && (
                     <div style={{ display: 'flex', gap: '8px', marginTop: '8px', alignItems: 'flex-start' }}>
-                      <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#8aafc5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.65rem', fontWeight: 700, flexShrink: 0, marginTop: '2px' }}>
+                      <div style={{
+                        width: '24px', height: '24px', borderRadius: '50%', background: '#8aafc5',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: 'white', fontSize: '0.65rem', fontWeight: 700, flexShrink: 0, marginTop: '2px',
+                      }}>
                         {currentUser?.name ? currentUser.name[0].toUpperCase() : '?'}
                       </div>
                       <div style={{ flex: 1 }}>
@@ -265,8 +282,7 @@ function CommentSection({ resourceId }: { resourceId: number }) {
                             style={{ padding: '4px 12px', borderRadius: '6px', border: 'none', background: replyText.trim() ? '#2e7da8' : '#b8cdd9', color: '#fff', fontSize: '0.75rem', fontWeight: 600, cursor: replyText.trim() ? 'pointer' : 'not-allowed' }}>
                             {submitting ? 'Posting...' : 'Reply'}
                           </button>
-                          <button
-                            onClick={() => { setReplyingTo(null); setReplyText(''); }}
+                          <button onClick={() => { setReplyingTo(null); setReplyText(''); }}
                             style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #dce8f0', background: 'transparent', color: '#7a9db5', fontSize: '0.75rem', cursor: 'pointer' }}>
                             Cancel
                           </button>
@@ -280,7 +296,11 @@ function CommentSection({ resourceId }: { resourceId: number }) {
                     <div style={{ marginTop: '8px', paddingLeft: '12px', borderLeft: '2px solid #dce8f0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {comment.replies.map(reply => (
                         <div key={reply.id} style={{ display: 'flex', gap: '8px' }}>
-                          <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#6a9ab5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.65rem', fontWeight: 700, flexShrink: 0 }}>
+                          <div style={{
+                            width: '24px', height: '24px', borderRadius: '50%', background: '#6a9ab5',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: 'white', fontSize: '0.65rem', fontWeight: 700, flexShrink: 0,
+                          }}>
                             {reply.user[0].toUpperCase()}
                           </div>
                           <div style={{ flex: 1, background: '#fff', border: '1px solid #e4eef5', borderRadius: '8px', padding: '8px 10px' }}>
@@ -288,7 +308,7 @@ function CommentSection({ resourceId }: { resourceId: number }) {
                               <span style={{ fontWeight: 600, fontSize: '0.78rem', color: '#1a3a50' }}>{reply.user}</span>
                               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                 <span style={{ fontSize: '0.68rem', color: '#9ab5c5' }}>{reply.timeAgo}</span>
-                                {currentUser?.id === reply.user_id && (
+                                {currentUser?.id !== undefined && currentUser.id === reply.user_id && (
                                   <button onClick={() => handleDelete(reply.id, comment.id)}
                                     style={{ background: 'none', border: 'none', color: '#fca5a5', fontSize: '0.68rem', cursor: 'pointer', padding: 0 }}>
                                     🗑️
@@ -314,15 +334,15 @@ function CommentSection({ resourceId }: { resourceId: number }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function ResourcesPage() {
-  const [allResources, setAllResources] = useState<Resource[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [allResources, setAllResources]   = useState<Resource[]>([]);
+  const [departments, setDepartments]     = useState<Department[]>([]);
+  const [courses, setCourses]             = useState<Course[]>([]);
+  const [loading, setLoading]             = useState(true);
   const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set());
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm]             = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
-  const [selectedCourse, setSelectedCourse] = useState('');
+  const [selectedCourse, setSelectedCourse]     = useState('');
   const [selectedFileType, setSelectedFileType] = useState('');
 
   useEffect(() => {
@@ -332,9 +352,9 @@ export default function ResourcesPage() {
           fetch('/api/resources'),
           fetch('/api/departments'),
         ]);
-        const resourcesData = await res1.json();
+        const resourcesData   = await res1.json();
         const departmentsData = await res2.json();
-        setAllResources(Array.isArray(resourcesData) ? resourcesData : []);
+        setAllResources(Array.isArray(resourcesData)   ? resourcesData   : []);
         setDepartments(Array.isArray(departmentsData) ? departmentsData : []);
       } catch (err) {
         console.error(err);
@@ -368,12 +388,14 @@ export default function ResourcesPage() {
       resource.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
       resource.courseCode.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDepartment = selectedDepartment === '' || String(resource.department_id) === String(selectedDepartment);
-    const matchesCourse = selectedCourse === '' || String(resource.course_id) === String(selectedCourse);
-    const matchesFileType = selectedFileType === '' || resource.fileType === selectedFileType;
+    const matchesCourse     = selectedCourse     === '' || String(resource.course_id)     === String(selectedCourse);
+    const matchesFileType   = selectedFileType   === '' || resource.fileType              === selectedFileType;
     return matchesSearch && matchesDepartment && matchesCourse && matchesFileType;
   });
 
-  const clearFilters = () => { setSearchTerm(''); setSelectedDepartment(''); setSelectedCourse(''); setSelectedFileType(''); };
+  const clearFilters = () => {
+    setSearchTerm(''); setSelectedDepartment(''); setSelectedCourse(''); setSelectedFileType('');
+  };
   const hasActiveFilters = searchTerm || selectedDepartment || selectedCourse || selectedFileType;
 
   const handleDownload = async (id: number) => {
@@ -383,16 +405,21 @@ export default function ResourcesPage() {
     });
     if (!response.ok) { toast.error('Download failed. Please try again.'); return; }
     const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
     a.href = url; a.download = ''; a.click();
     URL.revokeObjectURL(url);
   };
 
+  // Fix: if/else instead of ternary-as-statement
   const toggleComments = (resourceId: number) => {
     setExpandedComments(prev => {
       const next = new Set(prev);
-      next.has(resourceId) ? next.delete(resourceId) : next.add(resourceId);
+      if (next.has(resourceId)) {
+        next.delete(resourceId);
+      } else {
+        next.add(resourceId);
+      }
       return next;
     });
   };
@@ -403,7 +430,6 @@ export default function ResourcesPage() {
         .res-filters { display: flex; gap: 16px; flex-wrap: wrap; }
         .res-filters > select, .res-filters > button { flex-shrink: 0; }
         @media (max-width: 768px) {
-          .res-filters { flex-direction: column; }
           .res-filters > * { width: 100%; min-width: unset !important; }
           .res-search-input { min-width: unset !important; }
           .res-table { display: none !important; }
@@ -415,7 +441,9 @@ export default function ResourcesPage() {
       {/* Header */}
       <div style={{ marginBottom: '32px' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#1a3a50', margin: 0 }}>Resource Library</h1>
-        <p style={{ color: '#6a8fa8', marginTop: '8px', marginBottom: 0 }}>Browse and download academic resources shared by fellow students</p>
+        <p style={{ color: '#6a8fa8', marginTop: '8px', marginBottom: 0 }}>
+          Browse and download academic resources shared by fellow students
+        </p>
       </div>
 
       {/* Filters */}
@@ -468,7 +496,10 @@ export default function ResourcesPage() {
           </div>
         ) : (
           <>
-            {/* Desktop table */}
+            {/* Desktop table
+                Fix: wrap each resource + its comment row in a single <tr> isn't valid;
+                instead render them as sibling <tr>s directly — no fragment wrapper needed
+                since they're already siblings inside <tbody> */}
             <div className="res-table" style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
                 <thead>
@@ -478,47 +509,46 @@ export default function ResourcesPage() {
                     ))}
                   </tr>
                 </thead>
-                <tbody>
-                  {filteredResources.map(resource => (
-                    <>
-                      <tr key={resource.id} style={{ borderBottom: expandedComments.has(resource.id) ? 'none' : '1px solid #dce8f0' }}>
-                        <td style={{ padding: '16px 24px' }}>
-                          <div style={{ fontWeight: 600, color: '#1a3a50', marginBottom: '4px' }}>{resource.title}</div>
-                          <div style={{ fontSize: '0.85rem', color: '#6a8fa8' }}>{(resource.description || '').substring(0, 60)}...</div>
-                        </td>
-                        <td style={{ padding: '16px 24px', color: '#4a6a80' }}>{resource.department}</td>
-                        <td style={{ padding: '16px 24px', color: '#4a6a80' }}>{resource.courseName} ({resource.courseCode})</td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <span style={{ background: '#e3f0f8', color: '#2e7da8', padding: '4px 12px', borderRadius: '16px', fontSize: '0.85rem', fontWeight: 600 }}>{resource.fileType}</span>
-                        </td>
-                        <td style={{ padding: '16px 24px', color: '#4a6a80' }}>{resource.uploadedBy}</td>
-                        <td style={{ padding: '16px 24px', color: '#4a6a80' }}>⬇️ {resource.downloads}</td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                            <button onClick={() => handleDownload(resource.id)}
-                              style={{ background: 'transparent', border: '1px solid #2e7da8', color: '#2e7da8', padding: '5px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', transition: 'all 0.2s' }}
-                              onMouseEnter={e => { e.currentTarget.style.background = '#2e7da8'; e.currentTarget.style.color = 'white'; }}
-                              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#2e7da8'; }}>
-                              ⬇️ Download
-                            </button>
-                            <button onClick={() => toggleComments(resource.id)}
-                              style={{ background: expandedComments.has(resource.id) ? '#e8f4fb' : 'transparent', border: '1px solid #b8d4e4', color: '#4a7a9a', padding: '5px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', transition: 'all 0.2s' }}>
-                              💬 {expandedComments.has(resource.id) ? 'Hide' : 'Comments'}
-                            </button>
-                          </div>
+                {/* Fix: use <tbody> per resource group instead of fragment in map.
+                    Multiple <tbody> elements are valid HTML and satisfy TypeScript strict mode. */}
+                {filteredResources.map(resource => (
+                  <tbody key={resource.id}>
+                    <tr style={{ borderBottom: expandedComments.has(resource.id) ? 'none' : '1px solid #dce8f0' }}>
+                      <td style={{ padding: '16px 24px' }}>
+                        <div style={{ fontWeight: 600, color: '#1a3a50', marginBottom: '4px' }}>{resource.title}</div>
+                        <div style={{ fontSize: '0.85rem', color: '#6a8fa8' }}>{(resource.description || '').substring(0, 60)}...</div>
+                      </td>
+                      <td style={{ padding: '16px 24px', color: '#4a6a80' }}>{resource.department}</td>
+                      <td style={{ padding: '16px 24px', color: '#4a6a80' }}>{resource.courseName} ({resource.courseCode})</td>
+                      <td style={{ padding: '16px 24px' }}>
+                        <span style={{ background: '#e3f0f8', color: '#2e7da8', padding: '4px 12px', borderRadius: '16px', fontSize: '0.85rem', fontWeight: 600 }}>{resource.fileType}</span>
+                      </td>
+                      <td style={{ padding: '16px 24px', color: '#4a6a80' }}>{resource.uploadedBy}</td>
+                      <td style={{ padding: '16px 24px', color: '#4a6a80' }}>⬇️ {resource.downloads}</td>
+                      <td style={{ padding: '16px 24px' }}>
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                          <button onClick={() => handleDownload(resource.id)}
+                            style={{ background: 'transparent', border: '1px solid #2e7da8', color: '#2e7da8', padding: '5px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', transition: 'all 0.2s' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = '#2e7da8'; e.currentTarget.style.color = 'white'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#2e7da8'; }}>
+                            ⬇️ Download
+                          </button>
+                          <button onClick={() => toggleComments(resource.id)}
+                            style={{ background: expandedComments.has(resource.id) ? '#e8f4fb' : 'transparent', border: '1px solid #b8d4e4', color: '#4a7a9a', padding: '5px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', transition: 'all 0.2s' }}>
+                            💬 {expandedComments.has(resource.id) ? 'Hide' : `Comments (${resource.commentCount})`}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {expandedComments.has(resource.id) && (
+                      <tr style={{ borderBottom: '1px solid #dce8f0' }}>
+                        <td colSpan={7} style={{ padding: 0 }}>
+                          <CommentSection resourceId={resource.id} />
                         </td>
                       </tr>
-                      {/* Comment section row — expands below the resource row */}
-                      {expandedComments.has(resource.id) && (
-                        <tr key={`comments-${resource.id}`} style={{ borderBottom: '1px solid #dce8f0' }}>
-                          <td colSpan={7} style={{ padding: 0 }}>
-                            <CommentSection resourceId={resource.id} />
-                          </td>
-                        </tr>
-                      )}
-                    </>
-                  ))}
-                </tbody>
+                    )}
+                  </tbody>
+                ))}
               </table>
             </div>
 

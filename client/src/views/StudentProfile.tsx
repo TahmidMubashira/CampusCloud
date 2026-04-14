@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Layout from './Layout';
 
+// ── Interfaces ────────────────────────────────────────────────────────────────
 interface UploadItem {
   id: number;
   title: string;
@@ -9,7 +10,7 @@ interface UploadItem {
   fileType: string;
   downloads?: number;
   timeAgo: string;
-  rejection_reason?: string; 
+  rejection_reason?: string;
 }
 
 interface ProfileStats {
@@ -23,6 +24,16 @@ interface ProfileStats {
   rejectedUploads: UploadItem[];
 }
 
+interface Notification {
+  id: number;
+  type: string;
+  message: string;
+  resource_id: number | null;
+  is_read: boolean;
+  timeAgo: string;
+}
+
+// ── Stat Card ─────────────────────────────────────────────────────────────────
 function StatCard({ label, value, sub, icon }: {
   label: string; value: string | number; sub: string; icon: string;
 }) {
@@ -42,6 +53,7 @@ function StatCard({ label, value, sub, icon }: {
   );
 }
 
+// ── Upload Row ────────────────────────────────────────────────────────────────
 function UploadRow({ item, badge, onDelete }: {
   item: UploadItem;
   badge?: 'pending' | 'rejected';
@@ -55,6 +67,7 @@ function UploadRow({ item, badge, onDelete }: {
     XLSX: { bg: '#e8fbe8', text: '#2a8a2a' },
   };
   const color = fileColors[item.fileType] ?? { bg: '#f0f4f8', text: '#4a6a80' };
+  const hasReason = badge === 'rejected' && item.rejection_reason;
 
   const handleDelete = async () => {
     if (!window.confirm(`Delete "${item.title}"?`)) return;
@@ -71,11 +84,8 @@ function UploadRow({ item, badge, onDelete }: {
     }
   };
 
-  const hasReason = badge === 'rejected' && item.rejection_reason;
-
   return (
     <div style={{ marginBottom: '10px' }}>
-      {/* Main row */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: '14px',
         padding: '14px 16px', background: '#f5f9fc',
@@ -92,12 +102,8 @@ function UploadRow({ item, badge, onDelete }: {
         }}>📄</div>
 
         <div style={{ flex: 1, minWidth: '120px' }}>
-          <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#1a3a50' }}>
-            {item.title}
-          </div>
-          <div style={{ fontSize: '0.72rem', color: '#7a9db5' }}>
-            {item.department} • {item.courseCode}
-          </div>
+          <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#1a3a50' }}>{item.title}</div>
+          <div style={{ fontSize: '0.72rem', color: '#7a9db5' }}>{item.department} • {item.courseCode}</div>
           <div style={{ display: 'flex', gap: '14px', marginTop: '4px', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '0.68rem', color: '#9ab5c5' }}>🕐 {item.timeAgo}</span>
             {item.downloads !== undefined && (
@@ -107,58 +113,29 @@ function UploadRow({ item, badge, onDelete }: {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-          <span style={{
-            background: color.bg, color: color.text,
-            borderRadius: '4px', padding: '2px 8px',
-            fontSize: '0.68rem', fontWeight: 700,
-          }}>{item.fileType}</span>
-
+          <span style={{ background: color.bg, color: color.text, borderRadius: '4px', padding: '2px 8px', fontSize: '0.68rem', fontWeight: 700 }}>
+            {item.fileType}
+          </span>
           {badge === 'pending' && (
-            <span style={{
-              background: '#fff8e1', color: '#b8860b',
-              borderRadius: '4px', padding: '2px 8px',
-              fontSize: '0.65rem', fontWeight: 700,
-            }}>⏳ Pending</span>
+            <span style={{ background: '#fff8e1', color: '#b8860b', borderRadius: '4px', padding: '2px 8px', fontSize: '0.65rem', fontWeight: 700 }}>
+              ⏳ Pending
+            </span>
           )}
           {badge === 'rejected' && (
-            <span style={{
-              background: '#fee2e2', color: '#dc2626',
-              borderRadius: '4px', padding: '2px 8px',
-              fontSize: '0.65rem', fontWeight: 700,
-            }}>❌ Rejected</span>
+            <span style={{ background: '#fee2e2', color: '#dc2626', borderRadius: '4px', padding: '2px 8px', fontSize: '0.65rem', fontWeight: 700 }}>
+              ❌ Rejected
+            </span>
           )}
-
           {onDelete && (
-            <button
-              onClick={handleDelete}
-              style={{
-                background: '#fee2e2', color: '#dc2626',
-                border: 'none', borderRadius: '4px',
-                padding: '2px 8px', fontSize: '0.65rem',
-                fontWeight: 700, cursor: 'pointer',
-                marginTop: '2px',
-              }}
-            >
+            <button onClick={handleDelete} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '4px', padding: '2px 8px', fontSize: '0.65rem', fontWeight: 700, cursor: 'pointer', marginTop: '2px' }}>
               🗑️ Delete
             </button>
           )}
         </div>
       </div>
 
-      {/* Rejection reason banner — only shows for rejected items with a reason */}
       {hasReason && (
-        <div style={{
-          padding: '10px 16px',
-          background: '#fff5f5',
-          border: '1px solid #fecaca',
-          borderTop: 'none',
-          borderRadius: '0 0 8px 8px',
-          fontSize: '0.78rem',
-          color: '#dc2626',
-          display: 'flex',
-          gap: '8px',
-          alignItems: 'flex-start',
-        }}>
+        <div style={{ padding: '10px 16px', background: '#fff5f5', border: '1px solid #fecaca', borderTop: 'none', borderRadius: '0 0 8px 8px', fontSize: '0.78rem', color: '#dc2626', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
           <span style={{ flexShrink: 0 }}>💬</span>
           <span><strong>Admin feedback:</strong> {item.rejection_reason}</span>
         </div>
@@ -167,23 +144,16 @@ function UploadRow({ item, badge, onDelete }: {
   );
 }
 
+// ── Section Card ──────────────────────────────────────────────────────────────
 function SectionCard({ title, action, children }: {
   title: string;
   action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <div style={{
-      background: '#fff', borderRadius: '12px',
-      padding: '24px', border: '1px solid #dce8f0', marginBottom: '20px',
-    }}>
-      <div style={{
-        display: 'flex', justifyContent: 'space-between',
-        alignItems: 'center', marginBottom: '16px',
-      }}>
-        <h2 style={{ fontWeight: 700, fontSize: '1rem', color: '#1a3a50', margin: 0 }}>
-          {title}
-        </h2>
+    <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', border: '1px solid #dce8f0', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <h2 style={{ fontWeight: 700, fontSize: '1rem', color: '#1a3a50', margin: 0 }}>{title}</h2>
         {action}
       </div>
       {children}
@@ -191,41 +161,137 @@ function SectionCard({ title, action, children }: {
   );
 }
 
+// ── Empty State ───────────────────────────────────────────────────────────────
 function EmptyState({ message }: { message: string }) {
   return (
-    <div style={{
-      textAlign: 'center', padding: '24px',
-      color: '#7a9db5', fontSize: '0.82rem',
-    }}>
+    <div style={{ textAlign: 'center', padding: '24px', color: '#7a9db5', fontSize: '0.82rem' }}>
       {message}
     </div>
   );
 }
 
+// ── Notifications Section ─────────────────────────────────────────────────────
+function NotificationsSection() {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount]     = useState(0);
+  const [loading, setLoading]             = useState(true);
+  const [marking, setMarking]             = useState(false);
+
+  const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    if (!token) { setLoading(false); return; }
+    fetch('/api/notifications', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          setNotifications(data.notifications);
+          setUnreadCount(data.unreadCount);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  const handleMarkAllRead = async () => {
+    if (!token || unreadCount === 0) return;
+    setMarking(true);
+    try {
+      const res = await fetch('/api/notifications/read-all', {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+        setUnreadCount(0);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally { setMarking(false); }
+  };
+
+  const typeIcon: Record<string, string> = {
+    new_comment:  '💬',
+    new_reply:    '↩️',
+    approved:     '✅',
+    rejected:     '❌',
+  };
+
+  return (
+    <SectionCard
+      title={
+        unreadCount > 0
+          ? `Notifications (${unreadCount} unread)`
+          : 'Notifications'
+      }
+      action={
+        unreadCount > 0 ? (
+          <button
+            onClick={handleMarkAllRead}
+            disabled={marking}
+            style={{ fontSize: '0.78rem', color: '#4a90b8', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}
+          >
+            {marking ? 'Marking...' : 'Mark all read'}
+          </button>
+        ) : undefined
+      }
+    >
+      {loading ? (
+        <EmptyState message="Loading notifications..." />
+      ) : notifications.length === 0 ? (
+        <EmptyState message="No notifications yet." />
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {notifications.map(n => (
+            <div key={n.id} style={{
+              display: 'flex', gap: '12px', alignItems: 'flex-start',
+              padding: '12px 14px', borderRadius: '8px',
+              background: n.is_read ? '#f8fbfe' : '#edf5fa',
+              border: `1px solid ${n.is_read ? '#e4eef5' : '#b8d4e8'}`,
+              transition: 'background 0.2s',
+            }}>
+              <span style={{ fontSize: '1.1rem', flexShrink: 0, marginTop: '1px' }}>
+                {typeIcon[n.type] ?? '🔔'}
+              </span>
+              <div style={{ flex: 1 }}>
+                <p style={{ margin: 0, fontSize: '0.82rem', color: '#1a3a50', lineHeight: 1.45 }}>
+                  {n.message}
+                </p>
+                <span style={{ fontSize: '0.68rem', color: '#9ab5c5', marginTop: '4px', display: 'block' }}>
+                  {n.timeAgo}
+                </span>
+              </div>
+              {!n.is_read && (
+                <span style={{
+                  width: '8px', height: '8px', borderRadius: '50%',
+                  background: '#2e7da8', flexShrink: 0, marginTop: '6px',
+                }} />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
 export default function StudentProfile() {
-  const [stats, setStats] = useState<ProfileStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [stats, setStats]                     = useState<ProfileStats | null>(null);
+  const [loading, setLoading]                 = useState(true);
+  const [error, setError]                     = useState('');
   const [showAllApproved, setShowAllApproved] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) {
-      setError('Not logged in.');
-      setLoading(false);
-      return;
-    }
+    if (!token) { setError('Not logged in.'); setLoading(false); return; }
 
-    fetch('/api/profile/stats', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    fetch('/api/profile/stats', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(data => {
-        if (data.success) {
-          setStats(data);
-        } else {
-          setError('Failed to load profile.');
-        }
+        if (data.success) setStats(data);
+        else setError('Failed to load profile.');
       })
       .catch(() => setError('Network error.'))
       .finally(() => setLoading(false));
@@ -279,6 +345,7 @@ export default function StudentProfile() {
         .profile-stats-row > * { flex: 1; min-width: 130px; }
       `}</style>
 
+      {/* Header */}
       <div style={{ marginBottom: '28px' }}>
         <h1 style={{ fontWeight: 700, fontSize: '1.6rem', color: '#1a3a50', margin: 0 }}>
           Welcome back, {stats.user.name} 👋
@@ -288,23 +355,24 @@ export default function StudentProfile() {
         </p>
       </div>
 
+      {/* Stats */}
       <div className="profile-stats-row" style={{ marginBottom: '28px' }}>
-        <StatCard label="Total Contribution Points" value={stats.totalPoints} sub="Keep sharing to earn more!" icon="🏅" />
-        <StatCard label="Resources Uploaded" value={stats.totalUploads} sub="Total files shared" icon="📄" />
-        <StatCard label="Total Downloads" value={stats.totalDownloads} sub="Your impact on peers" icon="⬇️" />
+        <StatCard label="Total Contribution Points" value={stats.totalPoints}   sub="Keep sharing to earn more!" icon="🏅" />
+        <StatCard label="Resources Uploaded"        value={stats.totalUploads}   sub="Total files shared"        icon="📄" />
+        <StatCard label="Total Downloads"           value={stats.totalDownloads} sub="Your impact on peers"      icon="⬇️" />
       </div>
 
+      {/* Notifications */}
+      <NotificationsSection />
+
+      {/* Approved Uploads */}
       <SectionCard
         title="Your Uploads"
         action={
           stats.allApproved.length > 3 ? (
             <button
               onClick={() => setShowAllApproved(prev => !prev)}
-              style={{
-                fontSize: '0.78rem', color: '#4a90b8',
-                background: 'none', border: 'none',
-                cursor: 'pointer', fontWeight: 500,
-              }}
+              style={{ fontSize: '0.78rem', color: '#4a90b8', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}
             >
               {showAllApproved ? 'Show Less' : `View All (${stats.allApproved.length})`}
             </button>
@@ -320,6 +388,7 @@ export default function StudentProfile() {
         )}
       </SectionCard>
 
+      {/* Pending */}
       <SectionCard title={`Pending Approval (${stats.pendingUploads.length})`}>
         {stats.pendingUploads.length === 0 ? (
           <EmptyState message="No pending uploads." />
@@ -330,6 +399,7 @@ export default function StudentProfile() {
         )}
       </SectionCard>
 
+      {/* Rejected */}
       <SectionCard title={`Rejected (${stats.rejectedUploads.length})`}>
         {stats.rejectedUploads.length === 0 ? (
           <EmptyState message="No rejected uploads." />
@@ -341,4 +411,4 @@ export default function StudentProfile() {
       </SectionCard>
     </Layout>
   );
-}
+}76
