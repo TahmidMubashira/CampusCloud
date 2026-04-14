@@ -411,4 +411,4 @@ export default function StudentProfile() {
       </SectionCard>
     </Layout>
   );
-}76
+}
