@@ -43,6 +43,7 @@ class ResourceController extends Controller
                 'uploadedAt'    => $r->created_at->toDateString(),
                 'downloads'     => $r->downloads,
                 'resourceType'  => $r->resourceType,
+                'commentCount' => $r->comment_count ?? 0,
             ];
         }));
     }

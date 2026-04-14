@@ -8,6 +8,7 @@ use App\Http\Controllers\RewardController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,5 +62,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/resources/{id}/comments',  [CommentController::class, 'index']);
     Route::post('/resources/{id}/comments', [CommentController::class, 'store']);
     Route::delete('/comments/{id}',         [CommentController::class, 'destroy']);
+
+    // ── Notifications ─────────────────────────────────────────────────────────
+    Route::get('/notifications',           [NotificationController::class, 'index']);
+    Route::put('/notifications/read-all',  [NotificationController::class, 'markAllRead']);
 
 });
