@@ -44,23 +44,27 @@ interface Comment {
 const FILE_TYPES = ['PDF', 'DOCX', 'XLSX', 'PPTX', 'ZIP', 'MP4', 'JPG'];
 
 // ── Comment Section ───────────────────────────────────────────────────────────
-function CommentSection({ resourceId }: { resourceId: number }) {
-  const [comments, setComments]           = useState<Comment[]>([]);
-  const [loading, setLoading]             = useState(true);
-  const [newComment, setNewComment]       = useState('');
-  const [submitting, setSubmitting]       = useState(false);
-  const [replyingTo, setReplyingTo]       = useState<number | null>(null);
-  const [replyText, setReplyText]         = useState('');
+function CommentSection({
+  resourceId,
+  onCommentCountChange,
+}: {
+  resourceId: number;
+  onCommentCountChange: (delta: number) => void;
+}) {
+  const [comments, setComments]               = useState<Comment[]>([]);
+  const [loading, setLoading]                 = useState(true);
+  const [newComment, setNewComment]           = useState('');
+  const [submitting, setSubmitting]           = useState(false);
+  const [replyingTo, setReplyingTo]           = useState<number | null>(null);
+  const [replyText, setReplyText]             = useState('');
   const [expandedReplies, setExpandedReplies] = useState<Set<number>>(new Set());
 
-  // Fix: read token + currentUser inside the component so they're always fresh
   const token = localStorage.getItem('token');
-  // Fix: parse inside render so currentUser.id is always up-to-date
   const currentUser: { id?: number; name?: string } =
     JSON.parse(localStorage.getItem('user') || '{}');
 
-  // Fix: token added to dependency array; wrapped in useCallback to avoid stale ref
   const fetchComments = useCallback(() => {
+    setLoading(true);
     fetch(`/api/resources/${resourceId}/comments`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
@@ -85,10 +89,16 @@ function CommentSection({ resourceId }: { resourceId: number }) {
       const data = await res.json();
       if (data.success) {
         setComments(prev => [data.comment, ...prev]);
+        onCommentCountChange(+1);
         setNewComment('');
-      } else { toast.error('Failed to post comment'); }
-    } catch { toast.error('Network error'); }
-    finally { setSubmitting(false); }
+      } else {
+        toast.error('Failed to post comment');
+      }
+    } catch {
+      toast.error('Network error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handlePostReply = async (parentId: number) => {
@@ -108,13 +118,17 @@ function CommentSection({ resourceId }: { resourceId: number }) {
             ? { ...c, replies: [...c.replies, data.comment], replyCount: c.replyCount + 1 }
             : c
         ));
-        // Auto-expand so the new reply is visible
         setExpandedReplies(prev => new Set([...prev, parentId]));
         setReplyingTo(null);
         setReplyText('');
-      } else { toast.error('Failed to post reply'); }
-    } catch { toast.error('Network error'); }
-    finally { setSubmitting(false); }
+      } else {
+        toast.error('Failed to post reply');
+      }
+    } catch {
+      toast.error('Network error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleDelete = async (commentId: number, parentId?: number) => {
@@ -124,22 +138,46 @@ function CommentSection({ resourceId }: { resourceId: number }) {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
-      if (data.success) {
+
+      // Some backends return 200 with no body or non-JSON — handle both
+      let data: { success?: boolean; message?: string } = {};
+      try {
+        data = await res.json();
+      } catch {
+        // If no JSON body, treat HTTP 200/204 as success
+        data = { success: res.ok };
+      }
+
+      console.log('Delete response:', res.status, data);
+
+      if (data.success || res.ok) {
         if (parentId !== undefined) {
+          // Deleting a reply
           setComments(prev => prev.map(c =>
             c.id === parentId
-              ? { ...c, replies: c.replies.filter(r => r.id !== commentId), replyCount: c.replyCount - 1 }
+              ? {
+                  ...c,
+                  replies: c.replies.filter(r => r.id !== commentId),
+                  replyCount: Math.max(0, c.replyCount - 1),
+                }
               : c
           ));
         } else {
+          // Deleting a top-level comment
           setComments(prev => prev.filter(c => c.id !== commentId));
+          onCommentCountChange(-1);
         }
-      } else { toast.error('Failed to delete'); }
-    } catch { toast.error('Network error'); }
+        toast.success('Comment deleted');
+      } else {
+        console.error('Delete failed:', data);
+        toast.error(data.message || 'Failed to delete');
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+      toast.error('Network error');
+    }
   };
 
-  // Fix: no ternary-as-statement — use if/else inside the updater
   const toggleReplies = (commentId: number) => {
     setExpandedReplies(prev => {
       const next = new Set(prev);
@@ -224,8 +262,6 @@ function CommentSection({ resourceId }: { resourceId: number }) {
                       <span style={{ fontWeight: 600, fontSize: '0.8rem', color: '#1a3a50' }}>{comment.user}</span>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         <span style={{ fontSize: '0.7rem', color: '#9ab5c5' }}>{comment.timeAgo}</span>
-                        {/* Fix: currentUser.id is now a number from parsed JSON; comment.user_id
-                            is cast to number by the API — strict equality works correctly */}
                         {currentUser?.id !== undefined && currentUser.id === comment.user_id && (
                           <button onClick={() => handleDelete(comment.id)}
                             style={{ background: 'none', border: 'none', color: '#fca5a5', fontSize: '0.7rem', cursor: 'pointer', padding: '0' }}>
@@ -334,16 +370,16 @@ function CommentSection({ resourceId }: { resourceId: number }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function ResourcesPage() {
-  const [allResources, setAllResources]   = useState<Resource[]>([]);
-  const [departments, setDepartments]     = useState<Department[]>([]);
-  const [courses, setCourses]             = useState<Course[]>([]);
-  const [loading, setLoading]             = useState(true);
+  const [allResources, setAllResources]         = useState<Resource[]>([]);
+  const [departments, setDepartments]           = useState<Department[]>([]);
+  const [courses, setCourses]                   = useState<Course[]>([]);
+  const [loading, setLoading]                   = useState(true);
   const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set());
 
-  const [searchTerm, setSearchTerm]             = useState('');
-  const [selectedDepartment, setSelectedDepartment] = useState('');
-  const [selectedCourse, setSelectedCourse]     = useState('');
-  const [selectedFileType, setSelectedFileType] = useState('');
+  const [searchTerm, setSearchTerm]                     = useState('');
+  const [selectedDepartment, setSelectedDepartment]     = useState('');
+  const [selectedCourse, setSelectedCourse]             = useState('');
+  const [selectedFileType, setSelectedFileType]         = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -355,7 +391,7 @@ export default function ResourcesPage() {
         const resourcesData   = await res1.json();
         const departmentsData = await res2.json();
         setAllResources(Array.isArray(resourcesData)   ? resourcesData   : []);
-        setDepartments(Array.isArray(departmentsData) ? departmentsData : []);
+        setDepartments(Array.isArray(departmentsData)  ? departmentsData : []);
       } catch (err) {
         console.error(err);
         toast.error('Failed to load data');
@@ -379,6 +415,15 @@ export default function ResourcesPage() {
     }
     setSelectedCourse('');
   }, [selectedDepartment]);
+
+  // Called by CommentSection whenever a top-level comment is added or deleted
+  const handleCommentCountChange = (resourceId: number, delta: number) => {
+    setAllResources(prev => prev.map(r =>
+      r.id === resourceId
+        ? { ...r, commentCount: Math.max(0, r.commentCount + delta) }
+        : r
+    ));
+  };
 
   const filteredResources = allResources.filter(resource => {
     const matchesSearch =
@@ -411,7 +456,6 @@ export default function ResourcesPage() {
     URL.revokeObjectURL(url);
   };
 
-  // Fix: if/else instead of ternary-as-statement
   const toggleComments = (resourceId: number) => {
     setExpandedComments(prev => {
       const next = new Set(prev);
@@ -496,10 +540,7 @@ export default function ResourcesPage() {
           </div>
         ) : (
           <>
-            {/* Desktop table
-                Fix: wrap each resource + its comment row in a single <tr> isn't valid;
-                instead render them as sibling <tr>s directly — no fragment wrapper needed
-                since they're already siblings inside <tbody> */}
+            {/* Desktop table */}
             <div className="res-table" style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
                 <thead>
@@ -509,8 +550,6 @@ export default function ResourcesPage() {
                     ))}
                   </tr>
                 </thead>
-                {/* Fix: use <tbody> per resource group instead of fragment in map.
-                    Multiple <tbody> elements are valid HTML and satisfy TypeScript strict mode. */}
                 {filteredResources.map(resource => (
                   <tbody key={resource.id}>
                     <tr style={{ borderBottom: expandedComments.has(resource.id) ? 'none' : '1px solid #dce8f0' }}>
@@ -543,7 +582,10 @@ export default function ResourcesPage() {
                     {expandedComments.has(resource.id) && (
                       <tr style={{ borderBottom: '1px solid #dce8f0' }}>
                         <td colSpan={7} style={{ padding: 0 }}>
-                          <CommentSection resourceId={resource.id} />
+                          <CommentSection
+                            resourceId={resource.id}
+                            onCommentCountChange={(delta) => handleCommentCountChange(resource.id, delta)}
+                          />
                         </td>
                       </tr>
                     )}
@@ -572,12 +614,17 @@ export default function ResourcesPage() {
                         </button>
                         <button onClick={() => toggleComments(resource.id)}
                           style={{ background: expandedComments.has(resource.id) ? '#e8f4fb' : 'transparent', border: '1px solid #b8d4e4', color: '#4a7a9a', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem' }}>
-                          💬
+                            💬 {resource.commentCount > 0 ? resource.commentCount : ''}
                         </button>
                       </div>
                     </div>
                   </div>
-                  {expandedComments.has(resource.id) && <CommentSection resourceId={resource.id} />}
+                  {expandedComments.has(resource.id) && (
+                    <CommentSection
+                      resourceId={resource.id}
+                      onCommentCountChange={(delta) => handleCommentCountChange(resource.id, delta)}
+                    />
+                  )}
                 </div>
               ))}
             </div>
