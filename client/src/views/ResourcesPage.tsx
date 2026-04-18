@@ -139,12 +139,11 @@ function CommentSection({
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Some backends return 200 with no body or non-JSON — handle both
       let data: { success?: boolean; message?: string } = {};
       try {
         data = await res.json();
       } catch {
-        // If no JSON body, treat HTTP 200/204 as success
+        // No JSON body — treat HTTP 200/204 as success
         data = { success: res.ok };
       }
 
@@ -376,10 +375,18 @@ export default function ResourcesPage() {
   const [loading, setLoading]                   = useState(true);
   const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set());
 
-  const [searchTerm, setSearchTerm]                     = useState('');
-  const [selectedDepartment, setSelectedDepartment]     = useState('');
-  const [selectedCourse, setSelectedCourse]             = useState('');
-  const [selectedFileType, setSelectedFileType]         = useState('');
+  const [searchTerm, setSearchTerm]                 = useState('');
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [selectedCourse, setSelectedCourse]         = useState('');
+  const [selectedFileType, setSelectedFileType]     = useState('');
+
+  // Refetch just the resources list to sync comment counts from server
+  const fetchResources = useCallback(() => {
+    fetch('/api/resources')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setAllResources(data); })
+      .catch(() => {}); // silent — optimistic UI already updated
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -390,8 +397,8 @@ export default function ResourcesPage() {
         ]);
         const resourcesData   = await res1.json();
         const departmentsData = await res2.json();
-        setAllResources(Array.isArray(resourcesData)   ? resourcesData   : []);
-        setDepartments(Array.isArray(departmentsData)  ? departmentsData : []);
+        setAllResources(Array.isArray(resourcesData)  ? resourcesData  : []);
+        setDepartments(Array.isArray(departmentsData) ? departmentsData : []);
       } catch (err) {
         console.error(err);
         toast.error('Failed to load data');
@@ -416,13 +423,14 @@ export default function ResourcesPage() {
     setSelectedCourse('');
   }, [selectedDepartment]);
 
-  // Called by CommentSection whenever a top-level comment is added or deleted
+  // Optimistic update first (instant UI), then sync true count from server
   const handleCommentCountChange = (resourceId: number, delta: number) => {
     setAllResources(prev => prev.map(r =>
       r.id === resourceId
         ? { ...r, commentCount: Math.max(0, r.commentCount + delta) }
         : r
     ));
+    fetchResources();
   };
 
   const filteredResources = allResources.filter(resource => {
@@ -614,7 +622,7 @@ export default function ResourcesPage() {
                         </button>
                         <button onClick={() => toggleComments(resource.id)}
                           style={{ background: expandedComments.has(resource.id) ? '#e8f4fb' : 'transparent', border: '1px solid #b8d4e4', color: '#4a7a9a', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem' }}>
-                            💬 {resource.commentCount > 0 ? resource.commentCount : ''}
+                          💬 {resource.commentCount > 0 ? resource.commentCount : ''}
                         </button>
                       </div>
                     </div>
